@@ -19,10 +19,15 @@ class Flags {
 		$userId = (int) $userId;
 		$proceed = true;
 		$prepared = [];
+		$fields = [	"???",
+					"???" ];
+		foreach($fields as $field) {
+			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
+		}
 		if ($proceed) {
 			$prepared['create_time'] = time();
 			DB::insert("l_flags", $prepared);
-			$iid = mysqli_insert_id();
+			$iid = DB::insertId();
 			return $iid;
 		} else {
 			return 0;
@@ -74,12 +79,12 @@ class News {
 		foreach($fields as $field) {
 			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
 		}
-		if (!$prepared['url'] and !$prepared['text']) $proceed = false; 
+		if (!$prepared['source_url'] and !$prepared['synopsis'] and !$prepared['text']) $proceed = false; 
 		if ($proceed) {
 			$prepared['create_time'] = time();
 			$prepared['create_date'] = date("Y-m-d");
 			DB::insert("l_news", $prepared);
-			$iid = mysqli_insert_id();
+			$iid = DB::insertId();
 			if ($iid) {
 				$pipelineId = self::advancePipeline($iid, [ "news_id" => $iid, "stage_id" => $stageId, "type" => PIPELINE_CREATE, "data" => $data ]);
 				if ($pipelineId and $data['files']) {
@@ -157,6 +162,7 @@ class News {
 		$userId = (int) $userId;
 		$news = self::get($id);
 		if ($news) {
+			print_r($news);
 			$fields = [	"type",
 						"comment",
 						"bonus",
@@ -168,7 +174,7 @@ class News {
 			$data['date'] = date("Y-m-d");
 			$data['user_id'] = $userId;
 			DB::insert("l_news_pipeline", $data);
-			$iid = mysqli_insert_id();
+			$iid = DB::insertId();
 			self::touch($id, $userId);
 			return $iid;
 		} else {
@@ -234,11 +240,16 @@ class Files {
 		$userId = (int) $userId;
 		$proceed = true;
 		$prepared = [];
+		$fields = [	"???",
+					"???" ];
+		foreach($fields as $field) {
+			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
+		}
 		if ($proceed) {
 			$prepared['create_time'] = time();
 			$prepared['created_by'] = $userId;
 			DB::insert("l_files", $prepared);
-			$iid = mysqli_insert_id();
+			$iid = DB::insertId();
 			return $iid;
 		} else {
 			return 0;
@@ -273,10 +284,15 @@ class Users {
 		$userId = (int) $userId;
 		$proceed = true;
 		$prepared = [];
+		$fields = [	"???",
+					"???" ];
+		foreach($fields as $field) {
+			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
+		}
 		if ($proceed) {
 			$prepared['create_time'] = time();
 			DB::insert("l_users", $prepared);
-			$iid = mysqli_insert_id();
+			$iid = DB::insertId();
 			return $iid;
 		} else {
 			return 0;
@@ -304,5 +320,7 @@ class Users {
 	}
 	
 }
+
+echo News::create([ "source_url" => "http://yandex.ru", "title" => "Боже мой, это же Яндекс", "synopsis" => "Какой-то краткий текст" ]);
 
 ?>

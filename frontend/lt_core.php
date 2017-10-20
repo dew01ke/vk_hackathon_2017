@@ -13,8 +13,9 @@ class DB {
 	private static $handler = null;
 
 	private static function connect() {
-		$handler = mysqli_connect("localhost", self::$config['user'], self::config['password'], self::$config['name']);
+		self::$handler = mysqli_connect("localhost", self::$config['user'], self::$config['password'], self::$config['name']);
 		if (!self::$handler) self::error(mysqli_connect_errno(), mysqli_connect_error());
+		mysqli_set_charset(self::$handler, "utf8");
 		return self::$handler;
 	}
 
@@ -23,15 +24,25 @@ class DB {
 	}
 
 	public static function query($query) {
-		if (!$self::handler) $handler = self::connect();
+		if (!self::$handler) self::$handler = self::connect();
 		$query = self::processQuery($query);
-		$result = mysqli_query($query);
+		$result = mysqli_query(self::$handler, $query);
 		$out = [];
-		while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-			$out[] = $row;
+		if (is_object($result)) {
+			while ($row = mysqli_fetch_assoc($result)) {
+				$out[] = $row;
+			}
 		}
-		$result->close();
+		if (is_object($result)) $result->close();
 		return $out;
+	}
+	
+	public static function insertId() {
+		return mysqli_insert_id(self::$handler);
+	}
+
+	public static function affectedRows() {
+		return mysql_affected_rows(self::$handler);
 	}
 
 	public static function insert($table, $data, $updateData) {
@@ -49,7 +60,7 @@ class DB {
 			$keyPart = implode(",", $keyPart);
 			$valuePart = implode(",", $valuePart);
 			if (!$updateData) {
-				self::query("INSERT IGNORE INTO $table ($keyPart) VALUES ($keyPart)");
+				self::query("INSERT IGNORE INTO $table ($keyPart) VALUES ($valuePart)");
 			} else {
 				$updatePart = [];
 				foreach($updateData as $key=>$item) {
@@ -68,12 +79,16 @@ class DB {
 	public static function getValue($query) {
 		if (!self::$handler) self::$handler = self::connect();
 		$query = self::processQuery($query);
-		$result = mysqli_query($query);
+		$result = mysqli_query(self::$handler, $query);
 		$out = [];
-		$row = $result->fetch_array(MYSQL_NUM);
-		$result->close();
+		if (is_object($result)) {
+			$row = mysqli_fetch_row($result);
+		} else {
+			$row = null;
+		}
+		if (is_object($result)) $result->close();
 		if ($row) {
-			return $row[0];
+			return (int) $row[0];
 		} else {
 			return 0;
 		}
@@ -82,10 +97,15 @@ class DB {
 	public static function getSingle($query) {
 		if (!self::$handler) self::$handler = self::connect();
 		$query = self::processQuery($query);
-		$result = mysqli_query($query);
+		$result = mysqli_query(self::$handler, $query);
 		$out = [];
-		$row = $result->fetch_array(MYSQL_ASSOC);
-		$result->close();
+		if (is_object($result)) {
+			$row = mysqli_fetch_assoc($result);
+			print_r($row);
+		} else {
+			$row = null;
+		}
+		if (is_object($result)) $result->close();
 		if ($row) {
 			return $row;
 		} else {
@@ -94,7 +114,8 @@ class DB {
 	}
 
 	public static function escape($s) {
-		return "'".mysql_real_escape_string($s)."'";
+		if (!self::$handler) self::$handler = self::connect();
+		return "'".mysqli_real_escape_string(self::$handler, $s)."'";
 	}
 
 	public static function error($errNo, $errText) {
