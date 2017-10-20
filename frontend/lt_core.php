@@ -41,7 +41,7 @@ class DB {
 			foreach($data as $key=>$item) {
 				$keyPart[] = "`".$key."`";
 				if (!is_array($item)) {
-					$valuePart[] = self::escape($item);
+					$valuePart[] = self::escape(trim($item));
 				} else {
 					$valuePart[] = self::escape(json_encode($item));
 				}
@@ -53,7 +53,11 @@ class DB {
 			} else {
 				$updatePart = [];
 				foreach($updateData as $key=>$item) {
-					$updatePart[] = "`".$key."`=".self::escape($item); 
+					if (!is_array($item)) {
+						$updatePart[] = "`".$key."`=".self::escape($item); 
+					} else {
+						$updatePart[] = "`".$key."`=".self::escape(json_encode($item)); 
+					}
 				}
 				$updatePart = implode($updatePart);
 				self::query("INSERT INTO $table ($keyPart) VALUES ($valuePart) ON DUPLICATE KEY UPDATE $updatePart");
