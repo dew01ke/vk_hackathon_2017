@@ -28,6 +28,7 @@
     "*://*/*",
     "http://hackathon.andrey-volkov.ru/*",
     "https://hackathon.andrey-volkov.ru/*",
+    "https://oauth.vk.com/blank.html",
     "activeTab",
     "storage",
     "clipboardRead",
