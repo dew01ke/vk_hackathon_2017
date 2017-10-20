@@ -1,0 +1,17 @@
+.popup-container {
+    width: 350px;
+    background-color: #ffffff;
+}
+.popup-button-wrapper {
+    text-align: center;
+}
+.popup-button {
+    display: inline-block;
+    padding: 15px 25px;
+    font-size: 16px;
+    background-color: #5402cd;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 10px;
+    border: 0;
+}

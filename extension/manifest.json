@@ -1,0 +1,48 @@
+{
+  "name": "VK Hackathon Dev Extension",
+  "description": "VK Hackathon Dev Extension",
+  "version": "1.0.0.0",
+  "manifest_version": 2,
+  "icons": {
+    "16": "/assets/icon_extension_120.png",
+    "48": "/assets/icon_extension_120.png",
+    "128": "/assets/icon_extension_120.png"
+  },
+  "background": {
+    "scripts": ["/js/background.js"],
+    "persistent": true
+  },
+  "browser_action": {
+    "default_icon": "/assets/icon_extension_120.png",
+    "default_popup": "popup.html",
+    "default_title": "VK Hackathon Dev Extension"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://hackathon.andrey-volkov.ru/*", "https://hackathon.andrey-volkov.ru/*"],
+      "css": ["/css/main.css"],
+      "js": ["/js/main.js"]
+    }
+  ],
+  "permissions": [
+    "*://*/*",
+    "http://hackathon.andrey-volkov.ru/*",
+    "https://hackathon.andrey-volkov.ru/*",
+    "activeTab",
+    "storage",
+    "clipboardRead",
+    "clipboardWrite",
+    "contextMenus",
+    "notifications",
+    "storage",
+    "tabs",
+    "background"
+  ],
+  "web_accessible_resources": [
+    "css/*.css",
+    "js/*.js"
+  ],
+  "commands": {
+
+  }
+}
