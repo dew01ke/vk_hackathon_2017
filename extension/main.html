@@ -2,9 +2,92 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Control Panel</title>
+    <title>Панель управления</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
+    <header>
+        <nav class="navbar navbar-expand-md navbar-light fixed-top bg-light">
+            <a class="navbar-brand" href="#">Панель управления</a>
+            <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
+            <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Ссылка 1 <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 2</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 2</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 3</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-sm-3 col-md-2 d-none d-sm-block bg-dark sidebar">
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Ссылка 1 <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 2</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 3</a>
+                    </li>
+                </ul>
+
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 4</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 5</a>
+                    </li>
+                </ul>
+
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ссылка 6</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <main role="main" class="col-sm-9 ml-sm-auto col-md-10 pt-3">
+                <h1>Dashboard</h1>
+
+                <div class="row">
+                    <div class="col">
+                        <div style="width: 100%; min-width: 60px; background-color: #005cbf;">
+                            123
+                        </div>
+                        <div style="width: 100%; min-width: 60px; background-color: #00b7bf;">
+                            321
+                        </div>
+                    </div>
+                    <div class="col" style="background-color: firebrick">
+                        2 of 2
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/js/jquery-3.2.1.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
