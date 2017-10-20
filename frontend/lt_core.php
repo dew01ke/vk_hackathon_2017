@@ -101,7 +101,6 @@ class DB {
 		$out = [];
 		if (is_object($result)) {
 			$row = mysqli_fetch_assoc($result);
-			print_r($row);
 		} else {
 			$row = null;
 		}
