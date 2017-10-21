@@ -3,6 +3,10 @@ html, body {
     font-weight: normal;
 }
 
+body {
+    overflow-y: scroll;
+}
+
 #application {
     padding-top: 3.5rem;
 }

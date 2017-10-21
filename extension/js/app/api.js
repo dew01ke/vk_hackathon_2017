@@ -11,6 +11,7 @@ function Api() {
         'news:add':{e:[]},
         'news:update':{e:[]},
         'news:stage:change':{e:[]},
+        'news:setStage':{e:[]},
         'stages:getOne':{e:[]},
         'stages:get':{e:[]},
         'flags:getOne':{e:[]},
@@ -72,7 +73,7 @@ function Api() {
                 if ('error' in r && r.error)
                     _this.triggerEvent('error', {error:r.error}, target);
                 else
-                    _this.triggerEvent('news:stage:change', {news:r.list}, target);
+                    _this.triggerEvent('news:setStage', { success: (r.status === 100 && r.statusMessage === 'OK') }, target);
             });
         },
 //	add: function({params}, target) {

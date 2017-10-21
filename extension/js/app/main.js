@@ -278,7 +278,7 @@
         var template = '';
 
         for (var i in stages) {
-            template += '<a data-article-id="' + articleID + '" data-stage-id="' + stages[i].id + '" class="dropdown-item" href="#">' + stages[i].name + '</a>';
+            template += '<a data-article-id="' + articleID + '" data-stage-id="' + stages[i].id + '" class="dropdown-item article-change-stage" href="#">' + stages[i].name + '</a>';
         }
 
         return template;
@@ -313,6 +313,29 @@
 
         var visibleArticlePreview = $('.article-preview').filter(':visible').removeClass('article-preview-active');
         that.addClass('article-preview-active');
+    });
+
+    $(document).on('click', '.article-change-stage', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var that = $(this);
+        var articleID = that.attr('data-article-id');
+        var stageID = that.attr('data-stage-id');
+
+        if (articleID && stageID) {
+            api.on('news:setStage', function(e, response) {
+                api.off('news:setStage', 'setStage');
+
+                if (response.success) {
+                    alert('Успешно сменили стадию');
+                } else {
+                    alert('При смене стадии возникла ошибка');
+                }
+            }, 'setStage');
+
+            api.news.setStage({ id: articleID, stage_id: stageID }, 'setStage');
+        }
     });
 
     onInit();
