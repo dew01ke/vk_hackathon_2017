@@ -128,6 +128,17 @@ switch ($requestEntity) {
 					break;
 				}
 
+				case "update": {
+
+					$id = (int) $request['id'];
+					if ($id) {
+						News::update($id, $request, $userId);
+						$success = true;
+					}
+				
+					break;
+				}
+
 				case "delete": {
 
 					$id = (int) $request['id'];
@@ -148,6 +159,19 @@ switch ($requestEntity) {
 							$reply['item'] = $data;
 							$success = true;
 						}
+					}
+				
+					break;
+				}
+
+				case "rate": {
+
+					$id = (int) $request['id'];
+					$rating = (int) $request['rating']; 
+					if ($id) {
+						$rating = News::rate($id, $rating, $userId);
+						$reply['rating'] = $data;
+						$success = true;
 					}
 				
 					break;
@@ -367,9 +391,20 @@ switch ($requestEntity) {
 				
 				case "create": {
 
-					$newUserId = Files::create($request, $userId);
+					$newUserId = Users::create($request, $userId);
 					if ($newUserId) {
 						$reply['id'] = $newUserId;
+						$success = true;
+					}
+				
+					break;
+				}
+
+				case "update": {
+
+					$id = (int) $request['id'];
+					if ($id) {
+						Users::update($id, $request, $userId);
 						$success = true;
 					}
 				
@@ -467,9 +502,20 @@ switch ($requestEntity) {
 				
 				case "create": {
 
-					$newSourceId = Files::create($request, $userId);
+					$newSourceId = Sources::create($request, $userId);
 					if ($newSourceId) {
 						$reply['id'] = $newSourceId;
+						$success = true;
+					}
+				
+					break;
+				}
+
+				case "update": {
+
+					$id = (int) $request['id'];
+					if ($id) {
+						Sources::update($id, $request, $userId);
 						$success = true;
 					}
 				
