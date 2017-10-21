@@ -91,6 +91,14 @@ class Flags {
 
 	public static function getList($data) {
 		$where = "is_deleted=0";
+		if ($data['ids'] and is_string($data['ids'])) {
+			$data['ids'] = explode(",", $data['ids']);
+		}
+		if (is_array($data['ids'])) {
+			$tmp = [];
+			foreach($data['ids'] as $tmpId) $tmp[] = (int) $tmpId;
+			$where .= " AND id IN (".implode(",",$tmp).")";
+		}
 		$onPage = 500;
 		$startFrom = 0;
 		if ($data['offset']) $startFrom = (int) $data['offset'];
@@ -115,7 +123,6 @@ class News {
 		$userId = (int) $userId;
 		$proceed = true;
 		$prepared = [];
-		$stageId = self::getInitialStage($data);
 		// Для добавления внешних пользователей одним шагом с добавлением новости
 		// ext_user
 		//	channel: "vk"
@@ -136,9 +143,6 @@ class News {
 					"dup_level" ];
 		foreach($fields as $field) {
 			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
-		}
-		if (!isset($prepared['stage_id'])) {
-			$prepared['stage_id'] = $stageId;
 		}
 		if (!$data['source_id'] and $data['source_url']) {
 			$url = $data['source_url'];
@@ -167,7 +171,7 @@ class News {
 				$userData['origin_channel'] = $extUser['channel'];
 			}
 			if ($extUser['id']) $userData['origin_id'] = $extUser['id'];
-			if ($extUser['handle']) $userData['origin_nickname'] = $extUser['handle'];
+			if ($extUser['handle']) $userData['origin_handle'] = $extUser['handle'];
 			$existingExtUser = Users::getByOrigin($extUser['channel'], $extUser['id'], $extUser['handle']);
 			if (!$existingExtUser) {
 				if ($extUser['first_name']) $userData['first_name'] = $extUser['first_name'];
@@ -181,12 +185,25 @@ class News {
 						if ($extUser['profile']['nickname']) $userData['origin_handle'] = $extUser['profile']['nickname'];
 					}
 				}
-				Users::create($userData, $userId);
+				$originUserId = Users::create($userData, $userId);
+				$prepared['origin_user'] = $originUserId;
 			} else {
-				$userId = $existingExtUser['id'];
+				if ($extUser['first_name'] and !$existingExtUser['first_name']) {
+					DB::query("UPDATE l_users SET first_name=".DB::escape($extUser['first_name'])." WHERE id=$existingExtUser[id]");
+				}
+				if ($extUser['last_name'] and !$existingExtUser['last_name']) {
+					DB::query("UPDATE l_users SET last_name=".DB::escape($extUser['first_name'])." WHERE id=$existingExtUser[id]");
+				}
+				$originUserId = $existingExtUser['id'];
+				$prepared['origin_user'] = $originUserId;
 			}
 		}
-		if (!$prepared['source_url'] and !$prepared['synopsis'] and !$prepared['text']) $proceed = false; 
+		$stageId = self::getInitialStage($data);
+		if (!isset($prepared['stage_id'])) {
+			$prepared['stage_id'] = $stageId;
+		}
+		if (!$prepared['source_url'] and !$prepared['synopsis'] and !$prepared['text'] and !$prepared['title']) $proceed = false; 
+		// if (!$prepared['source_url'] and !$prepared['synopsis'] and !$prepared['text']) $proceed = false; 
 		if ($proceed) {
 			$prepared['create_time'] = time();
 			$prepared['create_date'] = date("Y-m-d");
@@ -240,12 +257,71 @@ class News {
 		DB::query("UPDATE l_news SET touch_time=".time().", touched_by=$userId WHERE id=$id");
 	}
 
+	public static function rate($id, $rating, $userId) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		$rating = (int) $rating;
+		$news = self::get($id);
+		if ($news) {
+			if ($rating != -1 and $rating != 1) $rating = 0;
+			if ($rating != 0) {
+				DB::insert("l_news_rating", [ "news_id" => $id, "user_id" => $userId, "rating" => $rating, "touch_time" => time() ], [ "rating" => $rating, "touch_time" => time() ]);
+			} else {
+				DB::query("DELETE FROM l_news_rating WHERE news_id=$id AND user_id=$userId");
+			}
+			$rating = DB::getValue("SELECT SUM(rating) FROM l_news_rating WHERE news_id=$id");
+			DB::query("UPDATE l_news SET rating=$rating WHERE id=$id");
+			self::touch($id, $userId);
+			return $rating;
+		} else {
+			return 0;
+		}
+	}
+
 	public static function get($id) {
 		$id = (int) $id;
 		$data = DB::getSingle("SELECT * FROM l_news WHERE id=$id AND is_deleted=0");
 		if ($data) {
 			$pipeline = self::getPipeline($id);
 			$flags = self::getFlags($id);
+			if ($data['touched_by']) {
+				$touchUser = Users::get($data['touched_by']);
+				if ($touchUser) {
+					$data['touched_by'] = [
+						"id" => $touchUser['id'],
+						"first_name" => $touchUser['first_name'],
+						"last_name" => $touchUser['last_name'],
+						"mid_name" => $touchUser['mid_name'],
+						"origin_channel" => $touchUser['origin_channel'],
+						"origin_id" => $touchUser['origin_id'],
+						"origin_handle" => $touchUser['origin_handle'],
+						"is_blacklisted" => $touchUser['is_blacklisted']
+					];
+				} else {
+					unset($data['touched_by']);
+				}
+			} else {
+				unset($data['touched_by']);
+			}
+			if ($data['origin_user']) {
+				$originUser = Users::get($data['origin_user']);
+				if ($originUser) {
+					$data['origin_user'] = [
+						"id" => $originUser['id'],
+						"first_name" => $originUser['first_name'],
+						"last_name" => $originUser['last_name'],
+						"mid_name" => $originUser['mid_name'],
+						"origin_channel" => $originUser['origin_channel'],
+						"origin_id" => $originUser['origin_id'],
+						"origin_handle" => $originUser['origin_handle'],
+						"is_blacklisted" => $originUser['is_blacklisted']
+					];
+				} else {
+					unset($data['origin_user']);
+				}
+			} else {
+				unset($data['origin_user']);
+			}
 			foreach($flags as $item) {
 				if ($item['is_tag']) {
 					$data['tags'][] = $item;
@@ -300,6 +376,14 @@ class News {
 		$startFrom = 0;
 		if ($data['offset']) $startFrom = (int) $data['offset'];
 		if ($data['limit']) $onPage = (int) $data['limit'];
+		if ($data['ids'] and is_string($data['ids'])) {
+			$data['ids'] = explode(",", $data['ids']);
+		}
+		if (is_array($data['ids'])) {
+			$tmp = [];
+			foreach($data['ids'] as $tmpId) $tmp[] = (int) $tmpId;
+			$where .= " AND id IN (".implode(",",$tmp).")";
+		}
 		if ($data['stage_id']) $where .= " AND stage_id=".((int) $data['stage_id']);
 		if ($data['added_after']) {
 			$t = (int) $data['added_after'];
@@ -325,11 +409,29 @@ class News {
 		} else {
 			$data = DB::query("SELECT l_news.* FROM l_news_flags LEFT JOIN l_news ON l_news_flags.news_id=l_news.id WHERE $where ORDER BY $order LIMIT $limit");
 		}
-		$newsFlags = array();
-		$newsActions = array();
+		$newsFlags = [];
+		$newsActions = [];
+		$relatedUsers = [];
 		foreach($data as $key=>$item) {
 			$newsFlags[$item['id']] = [];
 			$newsActions[$item['id']] = [];
+			if ($item['origin_user']) $relatedUsers[$item['origin_user']] = [];
+			if ($item['touched_by']) $relatedUsers[$item['touched_by']] = [];
+		}
+		if (count($relatedUsers)) {
+			$userList = Users::getList([ "ids" => array_keys($relatedUsers) ]);
+			foreach($userList as $item) {
+				$relatedUsers[$item['id']] = [
+					"id" => $item['id'],
+					"first_name" => $item['first_name'],
+					"last_name" => $item['last_name'],
+					"mid_name" => $item['mid_name'],
+					"origin_channel" => $item['origin_channel'],
+					"origin_id" => $item['origin_id'],
+					"origin_handle" => $item['origin_handle'],
+					"is_blacklisted" => $item['is_blacklisted']
+				];
+			}
 		}
 		if (count($newsFlags)) {
 			$flagList = DB::query("SELECT news_id, flag_id, l_flags.name, l_flags.id, l_flags.color, l_flags.priority, l_flags.added_by, l_flags.add_time FROM l_news_flags LEFT JOIN l_flags ON l_news_flags.flag_id=l_flags.id WHERE news_id IN (".implode(",",array_keys($newsFlags)).")");
@@ -381,12 +483,34 @@ class News {
 				}
 			}
 		}
+		foreach($data as $key=>$item) {
+			if ($item['origin_user']) {
+				if ($relatedUsers[$item['origin_user']]) {
+					$item['origin_user'] = $relatedUsers[$item['origin_user']];
+				} else {
+					unset($item['origin_user']);
+				}
+			} else {
+				unset($item['origin_user']);
+			}
+			if ($item['touched_by']) {
+				if ($relatedUsers[$item['touched_by']]) {
+					$item['touched_by'] = $relatedUsers[$item['touched_by']];
+				} else {
+					unset($item['touched_by']);
+				}
+			} else {
+				unset($item['touched_by']);
+			}
+			$data[$key] = $item;
+		}
 		return $data;
 	}
 	
 	public function getInitialStage($data) {
 		// Добавить определение начальной папки на основании подозрительности контента и надежности источника
-		return 3;
+		$stageId = 3;
+		return $stageId;
 	}	
 
 	public static function setStage($id, $stageId, $comment, $userId) {
@@ -616,6 +740,14 @@ class Files {
 	
 	public static function getList($data) {
 		$where = "is_deleted=0";
+		if ($data['ids'] and is_string($data['ids'])) {
+			$data['ids'] = explode(",", $data['ids']);
+		}
+		if (is_array($data['ids'])) {
+			$tmp = [];
+			foreach($data['ids'] as $tmpId) $tmp[] = (int) $tmpId;
+			$where .= " AND id IN (".implode(",",$tmp).")";
+		}
 		$order = "id DESC";
 		$onPage = 50;
 		$startFrom = 0;
@@ -659,6 +791,12 @@ class Users {
 					"origin_channel",
 					"origin_id",
 					"origin_data" ];
+		if ($data['channel']) {
+			$data['channel'] = trim(strtolower($data['channel']));
+			$data['origin_channel'] = $data['channel'];
+		}
+		if ($data['id']) $data['origin_id'] = $data['id'];
+		if ($data['handle']) $data['origin_handle'] = $data['handle'];
 		foreach($fields as $field) {
 			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
 		}
@@ -703,6 +841,14 @@ class Users {
 	
 	public static function getList($data) {
 		$where = "is_deleted=0";
+		if ($data['ids'] and is_string($data['ids'])) {
+			$data['ids'] = explode(",", $data['ids']);
+		}
+		if (is_array($data['ids'])) {
+			$tmp = [];
+			foreach($data['ids'] as $tmpId) $tmp[] = (int) $tmpId;
+			$where .= " AND id IN (".implode(",",$tmp).")";
+		}
 		$order = "id DESC";
 		$onPage = 50;
 		$startFrom = 0;
@@ -743,7 +889,7 @@ class Stages {
 		
 	public static function getAll() {
 		$out = [];
-		$data = DB::query("SELECT * FROM l_stages");
+		$data = DB::query("SELECT * FROM l_stages ORDER BY oid ASC");
 		foreach($data as $key=>$item) {
 			$out[$item['id']] = $item;
 		}

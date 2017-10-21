@@ -152,6 +152,19 @@ switch ($requestEntity) {
 				
 					break;
 				}
+
+				case "rate": {
+
+					$id = (int) $request['id'];
+					$rating = (int) $request['rating']; 
+					if ($id) {
+						$rating = News::rate($id, $rating, $userId);
+						$reply['rating'] = $data;
+						$success = true;
+					}
+				
+					break;
+				}
 				
 				case "getFlags": {
 
