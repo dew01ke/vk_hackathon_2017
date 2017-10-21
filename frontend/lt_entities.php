@@ -313,10 +313,10 @@ class News {
 			$data = DB::query("SELECT l_news.* FROM l_news_flags LEFT JOIN l_news ON l_news_flags.news_id=l_news.id WHERE $where ORDER BY $order LIMIT $limit");
 		}
 		$newsFlags = array();
-		$newsPipelines = array();
+		$newsActions = array();
 		foreach($data as $key=>$item) {
 			$newsFlags[$item['id']] = [];
-			$newsPipelines[$item['id']] = [];
+			$newsActions[$item['id']] = [];
 		}
 		if (count($newsFlags)) {
 			$flagList = DB::query("SELECT news_id, flag_id, l_flags.name, l_flags.id, l_flags.color, l_flags.priority, l_flags.added_by, l_flags.add_time FROM l_news_flags LEFT JOIN l_flags ON l_news_flags.flag_id=l_flags.id WHERE news_id IN (".implode(",",array_keys($newsFlags)).")");
@@ -327,7 +327,7 @@ class News {
 			}
 		}
 		if (count($newsActions)) {
-			$pipelineList = DB::query("SELECT news_id, MAX(id) FROM l_news_pipeline WHERE news_id IN (".implode(",",array_keys($newsActions)).") AND is_deleted=0 GROUP BY news_id");
+			$pipelineList = DB::query("SELECT news_id, MAX(id) AS id FROM l_news_pipeline WHERE news_id IN (".implode(",",array_keys($newsActions)).") AND is_deleted=0 GROUP BY news_id");
 			$newsActions = [];
 			foreach($pipelineList as $item) {
 				$newsActions[$item['id']] = [];
@@ -342,7 +342,7 @@ class News {
 					if (!$item['thumbnails']) $item['thumbnails'] = [];
 					$pipelineFiles[$pipelineId][] = $item;
 				}
-				$pipelineList = DB::query("SELECT * FROM l_news_pipelines WHERE id IN (".implode(",",array_keys($newsActions)).")");
+				$pipelineList = DB::query("SELECT * FROM l_news_pipeline WHERE id IN (".implode(",",array_keys($newsActions)).")");
 				$newsActions = [];
 				foreach($pipelineList as $item) {
 					$newsId = $item['news_id'];
@@ -351,8 +351,8 @@ class News {
 					$newsActions[$newsId] = $item;
 				}
 				foreach($data as $key=>$item) {
-					if ($newsPipelines[$item['id']]) {
-						$item['last_action'] = $newsPipelines[$item['id']];
+					if ($newsActions[$item['id']]) {
+						$item['last_action'] = $newsActions[$item['id']];
 					}
 					if ($newsFlags[$item['id']]) {
 						$localFlags = $newsFlags[$item['id']];
@@ -364,6 +364,7 @@ class News {
 							}
 						}
 					}
+					$data[$key] = $item;
 				}
 			}
 		}
