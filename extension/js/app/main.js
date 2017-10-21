@@ -111,7 +111,8 @@
                 cache.view_application.show();
                 cache.view_auth_required.hide();
 
-                api.token = data.user_token;
+                api.user_id = data.user_id;
+                api.user_token = data.user_token;
 
                 requestStages();
             } else {
