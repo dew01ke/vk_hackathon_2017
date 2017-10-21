@@ -1,13 +1,13 @@
 <html>
   <head>
     <title>Лентач</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
     <style type="text/css">
       html { padding:0;margin:0;border:0 none;max-height:500px;overflow-y:scroll}
       form { padding:0;margin:0;border:0 none;clear:both}
       fieldset { padding:0;margin:0;border:0 none}
       input[type=url], input[type=text], textarea { width:100%;box-sizing:border-box;}
       input[type=submit] { }
-      form .item { margin-bottom:5px}
       .last, .top { width:33.3%;float:left}
     </style>
   </head>
@@ -42,24 +42,25 @@
     </script>
     <form action="vk-iframe.php/news/add" method="POST" id="news-item-form">
       <fieldset>
-	<div class="item">
-	  <input type="file" multiple="multiple" name="image" placeholder="Изображение к новости"/>
+	<div class="item form-group">
+	  <input class="form-control" type="file" multiple="multiple" name="image" placeholder="Изображение к новости"/>
 	</div>
-	<div class="item">
-	  <input type="url" name="url" placeholder="Ссылка на новость"/>
+	<div class="item form-group">
+	  <input class="form-control" type="url" name="url" placeholder="Ссылка на новость"/>
 	</div>
-	<div class="item">
-	  <input type="text" name="title" placeholder="Заголовок новости"/>
+	<div class="item form-group">
+	  <input class="form-control" type="text" name="title" placeholder="Заголовок новости"/>
 	</div>
-	<div class="item">
-	  <textarea name="text" placeholder="Текст новости"></textarea>
+	<div class="item form-group">
+	  <textarea class="form-control" name="text" placeholder="Текст новости"></textarea>
 	</div>
-	<div class="item">
-	  <label><input type="checkbox" name="anonymous"/> Отправить анонимно</label>
+	<div class="item form-group">
+	  <div class="form-check">
+	    <label class="form-check-label"><input class="form-check-input" type="checkbox" name="anonymous"/> Отправить анонимно</label>
+	  </div>
 	</div>
-	<div class="errors"></div>
-	<div class="control">
-	  <input type="submit" value="Отправить"/>
+	<div class="control form-group">
+	  <input type="submit" value="Отправить" class="btn btn-primary"/>
 	</div>
       </fieldset>
     </form>

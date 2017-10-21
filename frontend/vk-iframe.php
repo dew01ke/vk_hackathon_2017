@@ -51,7 +51,7 @@ $r = new \Request();
 $matches = [];
 if ($r->path === '' || $r->path === '/') {
   $news = \News::getList(['limit' => 3, 'origin_user' => $user['id'], 'order' => ['create_time' => 'DESC']]);
-  $top = \News::getList(['limit' => 3, 'origin_user' => $user['id']]);
+  $top = \News::getList(['limit' => 3, 'origin_user' => $user['id']], 'order' => ['rating' => 'DESC']);
   header('Content-Type: text/html');
 
   $smarty

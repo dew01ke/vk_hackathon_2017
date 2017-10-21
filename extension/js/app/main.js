@@ -137,9 +137,15 @@
 
                 template += '<li class="list-group-item article-preview" data-article-id="' + article.id + '" data-stage-id="' + stageID + '">';
 
-                template += '<div class="article-preview-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
+                template += '<div class="article-preview-time">';
+                template += time.format('DD.MM') + ' в ' + time.format('HH:mm');
+                template += '<span class="article-preview-sender">' + renderUserProfile(article, false, 'От: ') + '</span>';
+                template += '</div>';
+
                 template += '<div class="article-preview-title">' + article.title + '</div>';
                 template += '<div class="article-preview-text">' + article.synopsis + '</div>';
+
+                template += '<button data-article-id="' + article.id + '" type="button" class="article-preview-remove-button btn btn-right btn-outline-secondary btn-sm"><span class="oi oi-trash"></span></button>';
 
                 template += '</li>';
             }
@@ -162,20 +168,7 @@
             template += '<div class="article-full-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
             template += '<div class="article-full-text" contentEditable>' + ((article.synopsis === '') ? '(Текст)' : article.synopsis) + '</div>';
 
-            if (article.origin_user && article.origin_user.first_name && article.origin_user.last_name && article.origin_user.origin_channel && article.origin_user.origin_id) {
-                var name = article.origin_user.first_name + ' ' + article.origin_user.last_name;
-                var link = name;
-
-                switch(article.origin_user.origin_channel) {
-                    case 'vk':
-                        link = '<a target="blank" href="https://vk.com/id' + article.origin_user.origin_id + '">' + name + '</a>';
-                        break;
-                    default:
-                        link = name;
-                }
-
-                template += '<div class="article-full-time">Отправил: ' + link + '</div>';
-            }
+            template += '<div class="article-full-time">' + renderUserProfile(article, true, 'Отправил: ') + '</div>';
 
             if (touched) {
                 template += '<div class="article-full-time">Последнее изменение: ' + touched.locale('ru').fromNow() + '</div>';
@@ -284,6 +277,32 @@
         return template;
     }
 
+    function renderUserProfile(article, wrapByLink, beforeText) {
+        var output = '';
+
+        if (article.origin_user && article.origin_user.first_name && article.origin_user.last_name && article.origin_user.origin_channel && article.origin_user.origin_id) {
+            var name = article.origin_user.first_name + ' ' + article.origin_user.last_name;
+
+            switch(article.origin_user.origin_channel) {
+                case 'vk':
+                    if (wrapByLink) {
+                        output = '<a target="blank" href="https://vk.com/id' + article.origin_user.origin_id + '">' + name + '</a>';
+                    } else {
+                        output = name;
+                    }
+                    break;
+                default:
+                    output = name;
+            }
+        }
+
+        if (beforeText && output !== '') {
+            output = beforeText + output;
+        }
+
+        return output;
+    }
+
     $(document).on('click', '.article-preview', function(e) {
         var that = $(this);
         var articleID = that.attr('data-article-id');
@@ -335,6 +354,29 @@
             }, 'setStage');
 
             api.news.setStage({ id: articleID, stage_id: stageID }, 'setStage');
+        }
+    });
+
+    $(document).on('click', '.article-preview-remove-button', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var that = $(this);
+        var articleID = that.attr('data-article-id');
+
+        if (articleID) {
+            api.on('news:delete', function(e, response) {
+                api.off('news:delete', 'articleRemove');
+
+                if (response.success) {
+                    var parent = that.closest('.article-preview');
+                    parent.remove();
+                } else {
+                    alert('При удалении статьи возникла ошибка');
+                }
+            }, 'articleRemove');
+
+            api.news.delete({ id: articleID }, 'articleRemove');
         }
     });
 
