@@ -284,7 +284,7 @@ class News {
 			}
 			DB::query("UPDATE l_news SET rating=$totalRating, rating_up=$upRating, rating_down=$downRating WHERE id=$id");
 			self::touch($id, $userId);
-			return $rating;
+			return $totalRating;
 		} else {
 			return 0;
 		}
