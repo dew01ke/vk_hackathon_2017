@@ -47,3 +47,11 @@ body {
 .sidebar .nav-item .nav-link.active {
     background-color: transparent;
 }
+
+
+.views, .navs, .sections {
+    display: none;
+}
+.views.views-active, .navs.navs-active, .sections.sections-active {
+    display: block;
+}
