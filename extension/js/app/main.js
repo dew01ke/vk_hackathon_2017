@@ -107,9 +107,11 @@
 
     function onInit() {
         sendBackgroundRequest('get_auth_state', null, function(data) {
-            if (data && data.user_id) {
+            if (data && data.user_id && data.user_token) {
                 cache.view_application.show();
                 cache.view_auth_required.hide();
+
+                api.token = data.user_token;
 
                 requestStages();
             } else {
@@ -186,8 +188,8 @@
             template += '</div>';
 
 
-            template += '<button type="button" class="btn btn-right btn-outline-success btn-sm">+1</button>';
-            template += '<button type="button" class="btn btn-right btn-outline-danger btn-sm">-1</button>';
+            template += '<button data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-outline-success btn-sm">+1</button>';
+            template += '<button data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-outline-danger btn-sm">-1</button>';
             template += '</div>'; //controls
 
         } else {
@@ -377,6 +379,36 @@
             }, 'articleRemove');
 
             api.news.delete({ id: articleID }, 'articleRemove');
+        }
+    });
+
+    $(document).on('click', '.article-full-rate-button', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var that = $(this);
+        var articleID = that.attr('data-article-id');
+        var rateType = that.attr('data-article-rate');
+        var rating = 0;
+
+        if (articleID && rateType) {
+            if (rateType === 'upvote') {
+                rating = 1;
+            } else {
+                rating = -1;
+            }
+
+            api.on('news:rate', function(e, response) {
+                api.off('news:rate', 'articleRate');
+
+                if (response.success) {
+
+                } else {
+                    alert('При оценивании статьи возникла ошибка');
+                }
+            }, 'articleRate');
+
+            api.news.rate({ id: articleID, rating: rating }, 'articleRate');
         }
     });
 

@@ -37,6 +37,7 @@ function tabCreateHandler(authTabId, callback) {
                 }
 
                 USER_PROFILE = {
+                    user_token: urlParams.access_token,
                     user_id: urlParams.user_id
                 };
 
