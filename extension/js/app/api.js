@@ -32,10 +32,9 @@ function Api() {
         events[event].e.push({target:target,handler:handler});
     }
 
-    _this.off = function(event, handler, target) {
+    _this.off = function(event, target) {
         for (let i = 0; i < events[event].e.length; i++) {
-            if (events[event].e[i].target === target
-                && events[event].e[i].handler === handler) {
+            if (events[event].e[i].target === target) {
                 events[event].e.splice(i, 1);
                 return;
             }
