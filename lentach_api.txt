@@ -9,7 +9,7 @@ flags/get
 	id (int)
 flags/getByName
 	name (int)
-	is_keyword (0/1/2 - все/только теги/только ключевые слова)
+	is_keyword (0/1/2 - РІСЃРµ/С‚РѕР»СЊРєРѕ С‚РµРіРё/С‚РѕР»СЊРєРѕ РєР»СЋС‡РµРІС‹Рµ СЃР»РѕРІР°)
 flags/getList
 	ids (array/csv)
 	offset (int)
@@ -46,8 +46,8 @@ news/create
 		mid_name (string)
 		id (string)
 		handle (string)
-		channel (string, пока "vk")
-		profile (object, сырой вывод профиля ВК, заменяет first_name/last_name/handle)
+		channel (string, РїРѕРєР° "vk")
+		profile (object, СЃС‹СЂРѕР№ РІС‹РІРѕРґ РїСЂРѕС„РёР»СЏ Р’Рљ, Р·Р°РјРµРЅСЏРµС‚ first_name/last_name/handle)
 news/update
 	title (string)
 	synopsis (string)
@@ -78,10 +78,10 @@ news/addComment
 	comment (string)
 news/advancePipeline
 	id (int)
-	type (int, список в начале lt_entities.php, PIPELINE_*)
+	type (int, СЃРїРёСЃРѕРє РІ РЅР°С‡Р°Р»Рµ lt_entities.php, PIPELINE_*)
 	comment (string)
 	bonus (int)
-	data (object, произвольная нагрузка)
+	data (object, РїСЂРѕРёР·РІРѕР»СЊРЅР°СЏ РЅР°РіСЂСѓР·РєР°)
 news/rate
 	id (int)
 	rating (-1/0/1)
@@ -105,13 +105,13 @@ news/removeFlag
 /* ---------------------------------------------------------------------------- */
 	
 files/create
-	(тут некоторые свойства очевидно не должны быть открыты наружу, но пока неважно)
-	type (int, пока 0)
-	name (string, человеческое имя, при загрузке равно имени файла)
+	(С‚СѓС‚ РЅРµРєРѕС‚РѕСЂС‹Рµ СЃРІРѕР№СЃС‚РІР° РѕС‡РµРІРёРґРЅРѕ РЅРµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ РѕС‚РєСЂС‹С‚С‹ РЅР°СЂСѓР¶Сѓ, РЅРѕ РїРѕРєР° РЅРµРІР°Р¶РЅРѕ)
+	type (int, РїРѕРєР° 0)
+	name (string, С‡РµР»РѕРІРµС‡РµСЃРєРѕРµ РёРјСЏ, РїСЂРё Р·Р°РіСЂСѓР·РєРµ СЂР°РІРЅРѕ РёРјРµРЅРё С„Р°Р№Р»Р°)
 	hash (string)
 	mime (string)
-	origin_key (string, ключ файла в форме)
-	origin_name (string, имя файла при загрузке)
+	origin_key (string, РєР»СЋС‡ С„Р°Р№Р»Р° РІ С„РѕСЂРјРµ)
+	origin_name (string, РёРјСЏ С„Р°Р№Р»Р° РїСЂРё Р·Р°РіСЂСѓР·РєРµ)
 	comment (string)
 	metadata (object)
 	size (int)
