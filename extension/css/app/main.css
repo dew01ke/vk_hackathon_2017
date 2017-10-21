@@ -69,7 +69,9 @@ body {
 }
 
 .article-preview {
+    position: relative;
     cursor: pointer;
+    min-height: 80px;
 }
 .article-preview.article-preview-active:after {
     content: '';
@@ -90,6 +92,17 @@ body {
 }
 .article-preview-text {
     font-size: 14px; line-height: 16px; color: #777777;
+}
+.article-preview-remove-button {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    cursor: pointer;
+    opacity: 0.6;
+    z-index: 100;
+}
+.article-preview-sender {
+    float: right;
 }
 
 
