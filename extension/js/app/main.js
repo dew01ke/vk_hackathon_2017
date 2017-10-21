@@ -160,7 +160,22 @@
 
             template += '<h4 class="article-full-title" contentEditable>' + ((article.title === '') ? '(Название)' : article.title) + '</h4>';
             template += '<div class="article-full-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
-            template += '<div class="article-full-text" contentEditable>' + article.synopsis + '</div>';
+            template += '<div class="article-full-text" contentEditable>' + ((article.synopsis === '') ? '(Текст)' : article.synopsis) + '</div>';
+
+            if (article.origin_user && article.origin_user.first_name && article.origin_user.last_name && article.origin_user.origin_channel && article.origin_user.origin_id) {
+                var name = article.origin_user.first_name + ' ' + article.origin_user.last_name;
+                var link = name;
+
+                switch(article.origin_user.origin_channel) {
+                    case 'vk':
+                        link = '<a target="blank" href="https://vk.com/id' + article.origin_user.origin_id + '">' + name + '</a>';
+                        break;
+                    default:
+                        link = name;
+                }
+
+                template += '<div class="article-full-time">Отправил: ' + link + '</div>';
+            }
 
             if (touched) {
                 template += '<div class="article-full-time">Последнее изменение: ' + touched.locale('ru').fromNow() + '</div>';
@@ -178,7 +193,8 @@
             template += '</div>';
 
 
-            template += '<button type="button" class="btn btn-outline-info btn-sm" style="float: right">+1</button>';
+            template += '<button type="button" class="btn btn-right btn-outline-success btn-sm">+1</button>';
+            template += '<button type="button" class="btn btn-right btn-outline-danger btn-sm">-1</button>';
             template += '</div>'; //controls
 
         } else {
