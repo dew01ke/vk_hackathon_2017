@@ -18,6 +18,7 @@
         view_auth_required: $('#auth-required'),
         header_navigation: $('.nav-link[data-location]')
     };
+    var stagesCache = {};
     var newsCache = {};
 
     var router = {
@@ -136,7 +137,7 @@
 
                 template += '<li class="list-group-item article-preview" data-article-id="' + article.id + '" data-stage-id="' + stageID + '">';
 
-                template += '<div class="article-preview-time">' + time.format('DD.MM') + ' в ' + time.format('HH.mm') + '</div>';
+                template += '<div class="article-preview-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
                 template += '<div class="article-preview-title">' + article.title + '</div>';
                 template += '<div class="article-preview-text">' + article.synopsis + '</div>';
 
@@ -150,24 +151,33 @@
         return template;
     }
 
-    function getArticleTemplate(article) {
+    function getArticleFullTemplate(article) {
         var template = '';
 
         if (article) {
             var time = moment(article.create_time * 1000);
             var touched = (article.touch_time && article.touch_time !== '0') ? moment(article.touch_time * 1000) : null;
 
-            template += '<h4>' + article.title + '</h4>';
-            template += '<div class="article-full-time">' + time.format('DD.MM') + ' в ' + time.format('HH.mm') + '</div>';
-            template += '<div class="article-full-text">' + article.synopsis + '</div>';
+            template += '<h4 class="article-full-title" contentEditable>' + ((article.title === '') ? '(Название)' : article.title) + '</h4>';
+            template += '<div class="article-full-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
+            template += '<div class="article-full-text" contentEditable>' + article.synopsis + '</div>';
 
             if (touched) {
                 template += '<div class="article-full-time">Последнее изменение: ' + touched.locale('ru').fromNow() + '</div>';
             }
 
             template += '<div class="article-full-controls">';
-            template += '<button type="button" class="btn btn-outline-success btn-sm">Сохранить</button>';
-            template += '<button type="button" class="btn btn-outline-secondary btn-sm">Переместить</button>';
+            template += '<button type="button" class="btn btn-success btn-sm">Сохранить</button>';
+
+
+            template += '<div class="btn-group">';
+            template += '<button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Переместить</button>';
+            template += '<div class="dropdown-menu">';
+            template += renderStagesToDropdown(stagesCache, article.id);
+            template += '</div>';
+            template += '</div>';
+
+
             template += '<button type="button" class="btn btn-outline-info btn-sm" style="float: right">+1</button>';
             template += '</div>'; //controls
 
@@ -190,11 +200,16 @@
             router.activeRoute.active_view = viewContainer;
 
             if (stages && stages.stages) {
-                for (let i in stages.stages) {
-                    let stage = stages.stages[i];
+                var collection =  _.sortBy(stages.stages, [function(o) { return parseInt(o.oid); }]);
+                let stagesCount = 0;
+
+                stagesCache = collection;
+
+                for (let i in collection) {
+                    let stage = collection[i];
 
                     html += '<li class="nav-item">';
-                    if (isStageFirst && stage.id === '0') {
+                    if (isStageFirst && stagesCount === 0) {
                         isStageFirst = false;
                         html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '">' + stage.name + '</a>';
                     } else {
@@ -206,7 +221,7 @@
                         api.off('news:get', 'getStageContent' + stage.id);
 
                         var content = '';
-                        if (isViewFirst && stage.id === '0') {
+                        if (isViewFirst && stagesCount === 0) {
                             isViewFirst = false;
                             content += '<div class="sections sections-active" data-section="stage' + stage.id + stage.name + '">';
                         } else {
@@ -226,11 +241,12 @@
                         viewContainer.append(section);
 
                         //TODO: не очень оправданно так делать
-                        if (!isViewFirst && stage.id === '0') {
+                        if (!isViewFirst && stagesCount === 0) {
                             router.activeRoute.active_section = section;
                         }
 
                         newsCache[stage.id] = news.news;
+                        stagesCount++;
                     }, 'getStageContent' + stage.id);
 
                     api.news.get({ stage_id: stage.id }, 'getStageContent' + stage.id);
@@ -240,6 +256,16 @@
             }
         }, 'getStages');
         api.stages.get({ params: {} }, 'getStages');
+    }
+
+    function renderStagesToDropdown(stages, articleID) {
+        var template = '';
+
+        for (var i in stages) {
+            template += '<a data-article-id="' + articleID + '" data-stage-id="' + stages[i].id + '" class="dropdown-item" href="#">' + stages[i].name + '</a>';
+        }
+
+        return template;
     }
 
     $(document).on('click', '.article-preview', function(e) {
@@ -253,7 +279,7 @@
                     return (v.id === articleID);
                 }).pop();
                 if (article) {
-                    var html = getArticleTemplate(article);
+                    var html = getArticleFullTemplate(article);
                     var container = (router.activeRoute && router.activeRoute.active_section) ? router.activeRoute.active_section.find('.workflow') : null;
 
                     if (container) {

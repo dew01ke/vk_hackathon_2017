@@ -92,6 +92,9 @@ html, body {
 .article-full {
 
 }
+.article-full-title {
+    outline: none;
+}
 .article-full-time {
     font-size: 14px;
     line-height: 16px;
@@ -103,12 +106,14 @@ html, body {
     font-size: 15px;
     line-height: 17px;
     color: #464646;
+    outline: none;
 }
 .article-full-controls {
     padding: 5px 0 0 0;
 }
 .article-full-controls button {
     margin-right: 5px;
+    cursor: pointer;
 }
 .article-full-controls button:last-child {
     margin-right: 0;
