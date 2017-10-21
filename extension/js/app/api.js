@@ -51,14 +51,14 @@ function Api() {
 //	}
 //    };
     _this.news = {
-//	getOne: function({id}, target) {
-//	    $.post('/news/' + id, {}).done(function(r) {
-//		if ('error' in r && r.error)
-//		    _this.triggerEvent('error', {error:r.error}, target);
-//		else
-//		    _this.triggerEvent('news:getOne', {newsItem:r.newsItem}, target);
-//	    });
-//	},
+        getOne: function(id, target) {
+            $.get(base + 'api/news/get', { id: id }).done(function(r) {
+            if ('error' in r && r.error)
+                _this.triggerEvent('error', {error:r.error}, target);
+            else
+                _this.triggerEvent('news:getOne', {newsItem:r.newsItem}, target);
+            });
+        },
         get: function(params, target) {
             $.post(base + 'api/news/getList', params).done(function(r) {
                 if ('error' in r && r.error)
