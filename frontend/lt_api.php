@@ -36,7 +36,8 @@ $userId = 0;
 $userData = array();
 if ($request['token']) {
 	$extToken = $request['token'];
-	$userData = Users::auth($token);
+	$originId = $request['origin_id'];
+	$userData = Users::auth($token, $originId);
 	if ($userData) {
 		$userId = $userData['id'];
 	} else {
@@ -690,6 +691,7 @@ switch ($requestEntity) {
 		}
 		
 }
+$reply['user_profile'] = $userData;
 } else {
 	if (!$reply['status']) {
 		$reply['status'] = 200;
@@ -707,7 +709,6 @@ if ($success) {
 	}
 }
 
-$reply['user_id'] = $userId;
 echo json_encode($reply);
 
 ?>

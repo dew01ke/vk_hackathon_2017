@@ -861,9 +861,9 @@ class Files {
 
 class Users {
 	
-	public static function auth($token) {
+	public static function auth($token, $originId) {
 		VK::setToken($token);
-		$profile = VK::getUserProfile();
+		$profile = VK::getUserProfile($originId);
 		if ($profile) {
 			$originId = $profile['id'];
 			$firstName = $profile['first_name'];
@@ -872,7 +872,7 @@ class Users {
 			if ($existingUser) {
 				return $existingUser;
 			} else {
-				$newUserId = self::create([ "origin_id" => $originId, "first_name" => $firstName, "last_name" => $lastName ]);
+				$newUserId = self::create([ "channel" => "vk", "origin_id" => $originId, "first_name" => $firstName, "last_name" => $lastName ]);
 				if ($newUserId) {
 					$newUser = self::get($newUserId);
 					return $newUser;
