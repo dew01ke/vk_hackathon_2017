@@ -176,7 +176,7 @@ switch ($requestEntity) {
 					$rating = (int) $request['rating']; 
 					if ($id) {
 						$rating = News::rate($id, $rating, $userId);
-						$reply['rating'] = $data;
+						$reply['rating'] = $rating;
 						$success = true;
 					}
 				

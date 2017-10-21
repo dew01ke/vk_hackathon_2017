@@ -73,7 +73,7 @@ class DB {
 						$updatePart[] = "`".$key."`=".self::escape(json_encode($item)); 
 					}
 				}
-				$updatePart = implode($updatePart);
+				$updatePart = implode(",",$updatePart);
 				self::query("INSERT INTO $table ($keyPart) VALUES ($valuePart) ON DUPLICATE KEY UPDATE $updatePart");
 			}
 		}

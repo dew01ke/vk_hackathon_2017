@@ -57,6 +57,12 @@
         },
         onInit: function() {
             var self = this;
+			
+			maintainLayout();
+			
+			window.setInterval(function() {
+				maintainLayout();
+			}, 1000);
 
             this.hashListener = window.addEventListener("hashchange", function() {
                 var hash = self.getCurrentPath();
@@ -143,9 +149,9 @@
 
                 template += '<li class="list-group-item article-preview" data-article-id="' + article.id + '" data-stage-id="' + stageID + '">';
 
-                template += '<div class="article-preview-time">';
+                template += '<div class="article-active-corner"></div><div class="article-preview-time">';
                 template += time.format('DD.MM') + ' в ' + time.format('HH:mm');
-                template += '<span class="article-preview-sender">' + renderUserProfile(article, false, 'От: ') + '</span>';
+                template += '<span class="article-preview-sender">' + renderUserProfile(article, true, 'от: ') + '</span>';
                 template += '</div>';
 
                 template += '<div class="article-preview-title">' + article.title + '</div>';
@@ -157,7 +163,7 @@
             }
             template += '</ul>';
         } else {
-            template = '<p>Здесь ничего нет</p>';
+            template = '<div class="content-empty"><p>Здесь ничего нет</p></div>';
         }
 
         return template;
@@ -171,10 +177,9 @@
             var touched = (article.touch_time && article.touch_time !== '0') ? moment(article.touch_time * 1000) : null;
 
             template += '<h4 class="article-full-title" contentEditable>' + ((article.title === '') ? '(Название)' : article.title) + '</h4>';
-            template += '<div class="article-full-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
             template += '<div class="article-full-text" contentEditable>' + ((article.synopsis === '') ? '(Текст)' : article.synopsis) + '</div>';
 
-            template += '<div class="article-full-time">' + renderUserProfile(article, true, 'Отправил: ') + '</div>';
+            template += '<div class="article-full-time">' + renderUserProfile(article, true, 'Отправил: ') + ' ' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
 
             if (touched) {
                 template += '<div class="article-full-time">Последнее изменение: ' + touched.locale('ru').fromNow() + '</div>';
@@ -256,9 +261,9 @@
                         }
 
                         content += '<div class="row article-list-row">';
-                        content += '<div class="col article-list-col">';
+                        content += '<div class="col article-list-col"><div class="article-list">';
                         content += getNewsListTemplate(news.news, stage.id);
-                        content += '</div>';
+                        content += '</div></div>';
                         content += '<div class="col article-full"><div class="workflow">';
                         content += '</div></div>'; //workflow
                         content += '</div>'; //row
@@ -305,7 +310,7 @@
             switch(article.origin_user.origin_channel) {
                 case 'vk':
                     if (wrapByLink) {
-                        output = '<a target="blank" href="https://vk.com/id' + article.origin_user.origin_id + '">' + name + '</a>';
+                        output = '<a target="blank" class="profile-link" href="https://vk.com/id' + article.origin_user.origin_id + '">' + name + '</a>';
                     } else {
                         output = name;
                     }
@@ -321,6 +326,19 @@
 
         return output;
     }
+	
+	// Для приведения флексов основной части к полной высоте страницы (минус шапка)
+	function maintainLayout() {
+		var totalHeight = $(window).height();
+		var headerHeight = $(".navbar").height();
+		var rowContainer = $(".article-list-row");
+		var mainHeight = totalHeight - headerHeight;
+		rowContainer.height(mainHeight);
+		var articleList = $(".article-list");
+		// articleList.height(mainHeight - 50);
+		var workFlow = $(".workflow");
+		// workFlow.height(mainHeight - 50);
+	}
 
     function renderUserData() {
 

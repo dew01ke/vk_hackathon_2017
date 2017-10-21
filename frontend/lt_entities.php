@@ -284,7 +284,7 @@ class News {
 			}
 			DB::query("UPDATE l_news SET rating=$totalRating, rating_up=$upRating, rating_down=$downRating WHERE id=$id");
 			self::touch($id, $userId);
-			return $rating;
+			return $totalRating;
 		} else {
 			return 0;
 		}
@@ -390,7 +390,7 @@ class News {
 		if (array_key_exists('order', $data)) {
 		  $orderItems = [];
 		  foreach ($data['order'] as $i => $o) {
-		    if (in_array($i, ['create_time'])
+		    if (in_array($i, ["rating", "touch_time", 'create_time', "publish_time"])
 			&& in_array($o, ['ASC', 'DESC', 'RAND()']))
 		      $orderItems[] = "$i $o";
 		  }
@@ -400,15 +400,6 @@ class News {
 		}
 		$onPage = 50;
 		$startFrom = 0;
-		if ($data['sort']) {
-			$sort = explode("_", $data['sort']);
-			$sortOrder = strtolower(array_pop($sort));
-			$sort = implode("_", $sort);
-			if ($sortOrder == "asc" or $sortOrder == "up") $sortOrder = "ASC";
-			if ($sortOrder == "desc" or $sortOrder == "down" or !$sortOrder) $sortOrder = "DESC";
-			$allowedSort = [ "rating", "touch_time", "create_time", "publish_time" ];
-			if (in_array($sort, $allowedSort)) $order = $sort." ".$sortOrder;
-		}
 		if ($data['offset']) $startFrom = (int) $data['offset'];
 		if ($data['limit']) $onPage = (int) $data['limit'];
 		if ($data['ids'] and is_string($data['ids'])) {
@@ -441,8 +432,10 @@ class News {
 		$limit = $startFrom.",".$onPage;
 		if (!$data['flag_id']) {
 			$data = DB::query("SELECT l_news.* FROM l_news WHERE $where ORDER BY $order LIMIT $limit");
+			//echo "SELECT l_news.* FROM l_news WHERE $where ORDER BY $order LIMIT $limit";
 		} else {
 			$data = DB::query("SELECT l_news.* FROM l_news_flags LEFT JOIN l_news ON l_news_flags.news_id=l_news.id WHERE $where ORDER BY $order LIMIT $limit");
+			//echo "SELECT l_news.* FROM l_news_flags LEFT JOIN l_news ON l_news_flags.news_id=l_news.id WHERE $where ORDER BY $order LIMIT $limit";
 		}
 		$newsFlags = [];
 		$newsActions = [];

@@ -1,23 +1,26 @@
 html, body {
     height: 100%;
     font-weight: normal;
+	overflow-y:hidden;
 }
 
 body {
-    overflow-y: scroll;
 }
 
+a { color:#949494;text-decoration:underline !important; }
+a:hover { color:#a0a0a0; }
+	
 .main-logo {
 	background-image:url('/assets/lentach.png');
 	background-repeat:no-repeat;
 	background-position:50% 50%;
 	background-size:100% 100%;
-	height:100px;
-	width:100px;
+	height:150px;
+	width:150px;
+	margin:0px auto;
 }
 
 #application {
-    padding-top: 100px;
 }
 #auth-required {
     height: 100%;
@@ -32,6 +35,8 @@ body {
 
 .navbar .nav-link { margin-right:15px !important; }
 
+.navbar .row { width:100%; }
+
 .sidebar.bg-dark {
     background: linear-gradient(to right, #793460 95%, #000000 110%);
 }
@@ -42,11 +47,11 @@ body {
 
 .sidebar {
     position: fixed;
-    top: 100px;
+    top: 0px;
     bottom: 0;
     left: 0;
     z-index: 1000;
-    padding: 20px 0;
+    padding: 0px 0px 20px 0px;
     overflow-x: hidden;
     overflow-y: auto;
 }
@@ -63,11 +68,19 @@ body {
     margin-left: 0;
 }
 
-.nav-trash { position:absolute;bottom:0px; }
+#navbarsExampleDefault { display:inline-block !important; }
+
+.nav-trash { margin-left:15px;position:absolute;bottom:30px; }
+.nav-trash .nav-link { border-top:1px solid rgba(255,255,255,0.5);margin-right:15px; }
+.nav-trash .nav-link.active { border-top:1px solid rgba(0,0,0,0);margin-right:0px; }
 
 .sidebar .nav-link {
     border-radius: 0;
+	margin-left:15px;
+	padding:12px 15px;
 }
+
+.nav-item a { text-decoration:none !important; }
 
 .sidebar .nav-item a {
     font-size: 15px;
@@ -75,24 +88,30 @@ body {
 }
 
 .sidebar .nav-item .nav-link.active {
-    background-color: transparent;
+	background:#e5e5e5;
+	color:#000;
 }
 
 
 .views, .navs, .sections {
     display: none;
+	overflow-y: hidden;
 }
 .views.views-active, .navs.navs-active, .sections.sections-active {
     display: block;
 }
 
 .article-preview {
+	box-sizing:border-box;
     position: relative;
     cursor: pointer;
-    min-height: 80px;
-	background: transparent !important;
+ 	background: transparent !important;
 	border:0px !important;
+	padding:20px 35px 20px 30px;
 	border-bottom:2px solid #ccc !important;
+}
+.article-preview-active {
+	background:rgba(255,255,255,0.3) !important;
 }
 .article-preview.article-preview-active:after {
     content: '';
@@ -102,14 +121,18 @@ body {
     right: 0;
     bottom: 0;
 }
+
+.article-preview .article-active-corner { display:none;background:#ccc;width:22px;height:22px;line-height:1px;font-size:1px;transform:translateX(-50%) translateY(-50%) rotate(45deg); }
+.article-preview-active .article-active-corner { display:inline-block;position:absolute;right:-22px;top:50%; }
+
 .article-preview-time {
     font-size: 13px; line-height: 15px; color: #949494;
 }
 .article-preview-title {
-    font-size: 14px; line-height: 16px; padding: 5px 0;
+    font-size: 16px; line-height: 1.3em; font-weight: 500; padding: 5px 0;
 }
 .article-preview-text {
-    font-size: 14px; line-height: 16px; color: #777777;
+    font-size: 14px; line-height: 1.3em; color: #777777;
 }
 .article-preview-remove-button {
     position: absolute;
@@ -118,6 +141,15 @@ body {
     cursor: pointer;
     opacity: 0.6;
     z-index: 100;
+	border:0px !important;
+	width:20px;height:20px;
+	background-image:url("/assets/trash_red.png");
+	background-repeat:no-repeat;
+	background-size:100% 100%;
+	background-position:50% 50%;
+}
+.article-preview-remove-button:hover {
+	background-color:rgba(0,0,0,0) !important;
 }
 .article-preview-sender {
     float: right;
@@ -127,6 +159,17 @@ body {
 .article-list-col {
 	background:linear-gradient(to right,#e5e5e5 98%,#cccccc 105%);
 	padding-right:0px !important;
+}
+.article-list {
+	height:100%;
+	box-sizing:border-box;
+	overflow-y:scroll;
+	overflow-x:hidden;
+}
+
+::-webkit-scrollbar {
+    width: 0px;  /* remove scrollbar space */
+    background: transparent;  /* optional: just make scrollbar invisible */
 }
 
 .workflow { padding:40px 30px; }
@@ -146,12 +189,14 @@ body {
 .article-full-text {
     padding: 0 0 5px 0;
     font-size: 15px;
-    line-height: 17px;
+    line-height: 1.4em;
     color: #464646;
     outline: none;
 }
 .article-full-controls {
-    padding: 5px 0 0 0;
+    padding: 15px 0 25px 0;
+	border-bottom: 2px solid #b0b0b0;
+	margin-bottom:25px;
 }
 .article-full-controls button {
     margin-right: 5px;
@@ -169,5 +214,8 @@ body {
 
 .btn-success { background:#008001 !important;padding:8px 20px;border-radius:0px;font-size:16px;font-weight:500;border:0px !important;margin-right:10px !important; }
 .btn-info { background:#793460 !important;padding:8px 20px;border-radius:0px;font-size:16px;font-weight:500;border:0px !important;margin-right:10px !important; }
+.btn-danger { border-radius:0px;background:#e5e5e5;padding:8px 10px;border:0px !important;margin-right:10px !important; }
 .btn-outline-danger { border-radius:0px;background:#e5e5e5;padding:8px 10px;border:0px !important;margin-right:10px !important; }
 .btn-outline-success { border-radius:0px;background:#e5e5e5;padding:8px 10px;border:0px !important; }
+
+.content-empty { padding:30px; }
