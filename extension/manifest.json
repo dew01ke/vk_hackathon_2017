@@ -9,7 +9,7 @@
     "128": "/assets/icon_extension_120.png"
   },
   "background": {
-    "scripts": ["/js/background.js"],
+    "scripts": ["/js/app/background.js"],
     "persistent": true
   },
   "browser_action": {
@@ -20,8 +20,8 @@
   "content_scripts": [
     {
       "matches": ["http://hackathon.andrey-volkov.ru/*", "https://hackathon.andrey-volkov.ru/*"],
-      "css": ["/css/main.css"],
-      "js": ["/js/main.js"]
+      "css": ["/css/app/main.css"],
+      "js": ["/js/app/main.js"]
     }
   ],
   "permissions": [
