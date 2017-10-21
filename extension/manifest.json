@@ -9,7 +9,7 @@
     "128": "/assets/icon_extension_120.png"
   },
   "background": {
-    "scripts": ["/js/app/background.js"],
+    "scripts": ["/js/vendor/jquery-3.2.1.min.js", "/js/app/background.js"],
     "persistent": true
   },
   "browser_action": {
