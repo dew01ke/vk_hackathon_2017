@@ -103,6 +103,16 @@ function Api() {
                 else
                     _this.triggerEvent('news:rate', { success: (r.status === 100 && r.statusMessage === 'OK') }, target);
             });
+        },
+        update: function(params, target) {
+            params.origin_id =_this.user_id;
+            params.token = _this.user_token;
+            $.post(base + 'api/news/update', params).done(function(r) {
+                if ('error' in r && r.error)
+                    _this.triggerEvent('error', {error:r.error}, target);
+                else
+                    _this.triggerEvent('news:update', { success: (r.status === 100 && r.statusMessage === 'OK') }, target);
+            });
         }
 //	add: function({params}, target) {
 //	    $.post('/news/create', {params:params}).done(function(r) {

@@ -181,7 +181,7 @@
             }
 
             template += '<div class="article-full-controls">';
-            template += '<button type="button" class="btn btn-success btn-sm">Сохранить</button>';
+            template += '<button data-article-id="' + article.id + '" type="button" class="article-full-save-button btn btn-success btn-sm">Сохранить</button>';
 
 
             template += '<div class="btn-group">';
@@ -326,6 +326,10 @@
 
     }
 
+    function renderArticlePipeline() {
+
+    }
+
     $(document).on('click', '.article-preview', function(e) {
         var that = $(this);
         var articleID = that.attr('data-article-id');
@@ -439,6 +443,32 @@
             }, 'articleRate');
 
             api.news.rate({ id: articleID, rating: rating }, 'articleRate');
+        }
+    });
+
+    $(document).on('click', '.article-full-save-button', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var that = $(this);
+        var articleID = that.attr('data-article-id');
+
+        if (articleID) {
+            var parent = that.closest('.workflow');
+            var articleTitle = parent.find('.article-full-title').text();
+            var articleSynopsis = parent.find('.article-full-text').text();
+
+            api.on('news:update', function(e, response) {
+                api.off('news:update', 'articleUpdate');
+
+                if (response.success) {
+                    alert('Статья успешно сохранена');
+                } else {
+                    alert('При сохранении статьи возникла ошибка');
+                }
+            }, 'articleUpdate');
+
+            api.news.update({ id: articleID, title1: articleTitle, synopsis1: articleSynopsis }, 'articleUpdate');
         }
     });
 
