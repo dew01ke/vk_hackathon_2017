@@ -420,8 +420,10 @@ class News {
 		$limit = $startFrom.",".$onPage;
 		if (!$data['flag_id']) {
 			$data = DB::query("SELECT l_news.* FROM l_news WHERE $where ORDER BY $order LIMIT $limit");
+			//echo "SELECT l_news.* FROM l_news WHERE $where ORDER BY $order LIMIT $limit";
 		} else {
 			$data = DB::query("SELECT l_news.* FROM l_news_flags LEFT JOIN l_news ON l_news_flags.news_id=l_news.id WHERE $where ORDER BY $order LIMIT $limit");
+			//echo "SELECT l_news.* FROM l_news_flags LEFT JOIN l_news ON l_news_flags.news_id=l_news.id WHERE $where ORDER BY $order LIMIT $limit";
 		}
 		$newsFlags = [];
 		$newsActions = [];
