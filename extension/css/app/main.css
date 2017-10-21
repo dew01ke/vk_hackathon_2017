@@ -7,32 +7,48 @@ body {
     overflow-y: scroll;
 }
 
+.main-logo {
+	background-image:url('/assets/lentach.png');
+	background-repeat:no-repeat;
+	background-position:50% 50%;
+	background-size:100% 100%;
+	height:100px;
+	width:100px;
+}
+
 #application {
-    padding-top: 3.5rem;
+    padding-top: 100px;
 }
 #auth-required {
     height: 100%;
 }
 
+.navbar-brand { font-weight:500;margin-left:30px;border-right:2px solid #e0e0e0;padding-right:30px; }
+
 .navbar.bg-light {
     background-color: #ffffff !important;
+	padding:0px !important;
 }
+
+.navbar .nav-link { margin-right:15px !important; }
 
 .sidebar.bg-dark {
-    background-color: #363636;
+    background: linear-gradient(to right, #793460 95%, #000000 110%);
 }
 
+.col-main {
+	padding:0px !important;
+}
 
 .sidebar {
     position: fixed;
-    top: 51px;
+    top: 100px;
     bottom: 0;
     left: 0;
     z-index: 1000;
     padding: 20px 0;
     overflow-x: hidden;
     overflow-y: auto;
-    border-right: 1px solid #eee;
 }
 
 .sidebar .nav {
@@ -47,13 +63,15 @@ body {
     margin-left: 0;
 }
 
+.nav-trash { position:absolute;bottom:0px; }
+
 .sidebar .nav-link {
     border-radius: 0;
 }
 
 .sidebar .nav-item a {
     font-size: 15px;
-    color: #959595;
+    color: #ffffff;
 }
 
 .sidebar .nav-item .nav-link.active {
@@ -72,6 +90,9 @@ body {
     position: relative;
     cursor: pointer;
     min-height: 80px;
+	background: transparent !important;
+	border:0px !important;
+	border-bottom:2px solid #ccc !important;
 }
 .article-preview.article-preview-active:after {
     content: '';
@@ -80,9 +101,6 @@ body {
     top: 0;
     right: 0;
     bottom: 0;
-    background: -moz-linear-gradient(left, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 100%);
-    background: -webkit-linear-gradient(left, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 100%);
-    background: linear-gradient(to right, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 100%);
 }
 .article-preview-time {
     font-size: 13px; line-height: 15px; color: #949494;
@@ -106,8 +124,15 @@ body {
 }
 
 
-.article-full {
+.article-list-col {
+	background:linear-gradient(to right,#e5e5e5 98%,#cccccc 105%);
+	padding-right:0px !important;
+}
 
+.workflow { padding:40px 30px; }
+
+.article-full {
+	background:#cccccc !important;
 }
 .article-full-title {
     outline: none;
@@ -141,3 +166,8 @@ body {
     min-width: 35px;
     max-width: 35px;
 }
+
+.btn-success { background:#008001 !important;padding:8px 20px;border-radius:0px;font-size:16px;font-weight:500;border:0px !important;margin-right:10px !important; }
+.btn-info { background:#793460 !important;padding:8px 20px;border-radius:0px;font-size:16px;font-weight:500;border:0px !important;margin-right:10px !important; }
+.btn-outline-danger { border-radius:0px;background:#e5e5e5;padding:8px 10px;border:0px !important;margin-right:10px !important; }
+.btn-outline-success { border-radius:0px;background:#e5e5e5;padding:8px 10px;border:0px !important; }

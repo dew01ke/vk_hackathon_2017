@@ -220,7 +220,7 @@
                 for (let i in collection) {
                     let stage = collection[i];
 
-                    html += '<li class="nav-item">';
+                    html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
                     if (isStageFirst && stagesCount === 0) {
                         isStageFirst = false;
                         html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '">' + stage.name + '</a>';
@@ -240,12 +240,12 @@
                             content += '<div class="sections" data-section="stage' + stage.id + stage.name + '">';
                         }
 
-                        content += '<div class="row">';
-                        content += '<div class="col">';
+                        content += '<div class="row article-list-row">';
+                        content += '<div class="col article-list-col">';
                         content += getNewsListTemplate(news.news, stage.id);
                         content += '</div>';
-                        content += '<div class="col workflow article-full">';
-                        content += '</div>'; //workflow
+                        content += '<div class="col article-full"><div class="workflow">';
+                        content += '</div></div>'; //workflow
                         content += '</div>'; //row
                         content += '</div>'; //section
 

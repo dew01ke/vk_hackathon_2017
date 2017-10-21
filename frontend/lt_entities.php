@@ -341,6 +341,10 @@ class News {
 					$data['keywords'][] = $item;
 				}
 			}
+			$ratingList = DB::query("SELECT * FROM l_news_rating WHERE news_id=$id");
+			foreach($ratingList as $item) {
+				$data['rating_list'][$item['user_id']] = $item['rating'];
+			}
 		}
 		return $data;
 	}
@@ -443,11 +447,19 @@ class News {
 		$newsFlags = [];
 		$newsActions = [];
 		$relatedUsers = [];
+		$allRatings = [];
 		foreach($data as $key=>$item) {
 			$newsFlags[$item['id']] = [];
 			$newsActions[$item['id']] = [];
+			$allRatings[$item['id']] = [];
 			if ($item['origin_user']) $relatedUsers[$item['origin_user']] = [];
 			if ($item['touched_by']) $relatedUsers[$item['touched_by']] = [];
+		}
+		if (count($allRatings)) {
+			$ratingList = DB::query("SELECT * FROM l_news_rating WHERE news_id IN (".implode(",",array_keys($allRatings)).")");
+			foreach($ratingList as $item) {
+				$allRatings[$item['news_id']][$item['user_id']] = $item['rating'];
+			}
 		}
 		if (count($relatedUsers)) {
 			$userList = Users::getList([ "ids" => array_keys($relatedUsers) ]);
@@ -515,6 +527,9 @@ class News {
 			}
 		}
 		foreach($data as $key=>$item) {
+			if ($allRatings[$item['id']]) {
+				$item['rating_list'] = $allRatings[$item['id']];
+			}
 			if ($item['origin_user']) {
 				if ($relatedUsers[$item['origin_user']]) {
 					$item['origin_user'] = $relatedUsers[$item['origin_user']];
@@ -847,8 +862,10 @@ class Files {
 class Users {
 	
 	public static function auth($token) {
-		$result = VK::tryToken($token);
-		if ($result) {
+		VK::setToken($token);
+		$profile = VK::getUserProfile();
+		if ($profile) {
+			print_r($profile);
 			return true;
 		} else {
 			return false;
