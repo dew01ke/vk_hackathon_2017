@@ -375,7 +375,17 @@ class News {
 	
 	public static function getList($data) {
 		$where = "l_news.is_deleted=0";
-		$order = "touch_time ASC";
+		if (array_key_exists('order', $data)) {
+		  $orderItems = [];
+		  foreach ($data['order'] as $i => $o) {
+		    if (in_array($i, ['create_time'])
+			&& in_array($o, ['ASC', 'DESC', 'RAND()']))
+		      $orderItems[] = "$i $o";
+		  }
+		  $order = implode(',', $orderItems);
+		} else {
+		  $order = "touch_time ASC";
+		}
 		$onPage = 50;
 		$startFrom = 0;
 		if ($data['offset']) $startFrom = (int) $data['offset'];
