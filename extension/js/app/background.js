@@ -1,5 +1,6 @@
 var BASE_AUTH_URL = 'https://oauth.vk.com/authorize?client_id=6227703&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=&response_type=token&v=5.52';
 var USER_PROFILE = null;
+var NOTIFICATION = null;
 
 function getUrlParams(url) {
     var urlParams = {};
@@ -49,6 +50,16 @@ function tabCreateHandler(authTabId, callback) {
     }
 }
 
+function createNotification(id, message) {
+    var nid = (id) ? id : Math.random().toString();
+    chrome.notifications.create(nid, {
+        type: 'basic',
+        iconUrl: '/assets/icon_extension_120.png',
+        title: 'HACKATHON DEV EXTENSION',
+        message: message
+    }, function(notificationID) {});
+}
+
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
     if (request && request.method) {
         switch(request.method) {
@@ -59,6 +70,9 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
                 break;
             case 'get_auth_state':
                 sendResponse(USER_PROFILE);
+                break;
+            case 'create_notification':
+                createNotification(request.id, request.message);
                 break;
             default:
                 console.log('onMessage', request);
