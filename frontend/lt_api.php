@@ -14,6 +14,10 @@ const 	PIPELINE_CREATE = 0,
 		PIPELINE_ALERT = 7,
 		PIPELINE_FEEDBACK = 8,
 		PIPELINE_FLAG = 9;
+
+
+// -----------------------------------------------------------------------
+
 		
 class Flags {
 	
@@ -64,8 +68,8 @@ class Flags {
 	public static function getByName($name, $isKeyword) {
 		$name = DB::escape($name);
 		$where = "";
-		if ($isKeyword == 1) $where = "AND is_tag = 1";
-		if ($isKeyword == 2) $where = "AND is_keyword = 1";
+		if ($isKeyword == 1) $where = " AND is_tag = 1";
+		if ($isKeyword == 2) $where = " AND is_keyword = 1";
 		$data = DB::getSingle("SELECT * FROM l_flags WHERE name=$name $where AND is_deleted=0");
 		return $data;
 	}
@@ -85,6 +89,10 @@ class Flags {
 	}
 	
 }
+
+
+// -----------------------------------------------------------------------
+
 
 class News {
 	
@@ -112,6 +120,28 @@ class News {
 					"dup_level" ];
 		foreach($fields as $field) {
 			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
+		}
+		if (!isset($prepared['stage_id'])) {
+			$prepared['stage_id'] = $stageId;
+		}
+		if (!$data['source_id'] and $data['source_url']) {
+			$url = $data['source_url'];
+			$tmp = explode("//", $url);
+			if ($tmp[1]) {
+				$tmp = $tmp[1];
+				$tmp = explode("/", $tmp);
+				$tmp = strtolower(trim($tmp[0]));
+				if ($tmp and substr_count($tmp,".") >= 1) {
+					$existingSource = Sources::getByDomain($tmp);
+					if ($existingSource) {
+						$sourceId = $existingSource['id'];
+					} else {
+						$sourceData = [ "url" ];
+						$sourceId = Sources::create([ "url" => $tmp ], $userId);
+					}
+					$prepared['source_id'] = $sourceId;
+				}
+			}
 		}
 		if ($data['ext_user']) {
 			$extUser = $data['ext_user'];
@@ -147,7 +177,7 @@ class News {
 			DB::insert("l_news", $prepared);
 			$iid = DB::insertId();
 			if ($iid) {
-				$pipelineId = self::advancePipeline($iid, [ "news_id" => $iid, "stage_id" => $stageId, "type" => PIPELINE_CREATE, "data" => $data ]);
+				$pipelineId = self::advancePipeline($iid, [ "news_id" => $iid, "stage_id" => $stageId, "type" => PIPELINE_CREATE, "data" => $data ], $userData);
 				if ($pipelineId and $data['files']) {
 					foreach($data['files'] as $key=>$file) {
 						if ($file['tmp_name']) {
@@ -197,6 +227,17 @@ class News {
 	public static function get($id) {
 		$id = (int) $id;
 		$data = DB::getSingle("SELECT * FROM l_news WHERE id=$id AND is_deleted=0");
+		if ($data) {
+			$pipeline = self::getPipeline($id);
+			$flags = self::getFlags($id);
+			foreach($flags as $item) {
+				if ($item['is_tag']) {
+					$data['tags'][] = $item;
+				} else {
+					$data['keywords'][] = $item;
+				}
+			}
+		}
 		return $data;
 	}
 	
@@ -225,7 +266,7 @@ class News {
 			foreach($fileList as $item) {
 				$pipelineId = $item['pipeline_id'];
 				unset($item['pipeline_id'], $item['is_deleted'], $item['path']);
-				$item['thumbnails'] = json_decode($item['thumbnails']);
+				$item['thumbnails'] = json_decode($item['thumbnails'], true);
 				if (!$item['thumbnails']) $item['thumbnails'] = [];
 				$pipelineFiles[$pipelineId][] = $item;
 			}
@@ -237,14 +278,37 @@ class News {
 	}
 	
 	public static function getList($data) {
-		$where = "is_deleted=0";
+		$where = "l_news.is_deleted=0";
 		$order = "touch_time ASC";
 		$onPage = 50;
 		$startFrom = 0;
 		if ($data['offset']) $startFrom = (int) $data['offset'];
 		if ($data['limit']) $onPage = (int) $data['limit'];
+		if ($data['stage_id']) $where .= " AND stage_id=".((int) $data['stage_id']);
+		if ($data['added_after']) {
+			$t = (int) $data['added_after'];
+			$where .= " AND create_date>=".DB::escape(date("Y-m-d",$t))." AND create_time>$t";
+		}
+		if ($data['added_before']) {
+			$t = (int) $data['added_before'];
+			$where .= " AND create_date<=".DB::escape(date("Y-m-d",$t))." AND create_time<$t";
+		}
+		if ($data['published_before']) {
+			$t = (int) $data['published_before'];
+			$where .= " AND publish_date>=".DB::escape(date("Y-m-d",$t))." AND publish_time>$t";
+		}
+		if ($data['published_before']) {
+			$t = (int) $data['published_before'];
+			$where .= " AND publish_date<=".DB::escape(date("Y-m-d",$t))." AND publish_time<$t";
+		}
+		if ($data['source_id']) $where .= " AND source_id=".((int) $data['source_id']);
+		if ($data['origin_user']) $where .= " AND origin_user=".((int) $data['origin_user']);
 		$limit = $startFrom.",".$onPage;
-		$data = DB::query("SELECT l_news.* FROM l_news WHERE $where ORDER BY $order LIMIT $limit");
+		if (!$data['flag_id']) {
+			$data = DB::query("SELECT l_news.* FROM l_news WHERE $where ORDER BY $order LIMIT $limit");
+		} else {
+			$data = DB::query("SELECT l_news.* FROM l_news_flags LEFT JOIN l_news ON l_news_flags.news_id=l_news.id WHERE $where ORDER BY $order LIMIT $limit");
+		}
 		$newsFlags = array();
 		$newsPipelines = array();
 		foreach($data as $key=>$item) {
@@ -271,7 +335,7 @@ class News {
 				foreach($fileList as $item) {
 					$pipelineId = $item['pipeline_id'];
 					unset($item['pipeline_id'], $item['is_deleted'], $item['path']);
-					$item['thumbnails'] = json_decode($item['thumbnails']);
+					$item['thumbnails'] = json_decode($item['thumbnails'], true);
 					if (!$item['thumbnails']) $item['thumbnails'] = [];
 					$pipelineFiles[$pipelineId][] = $item;
 				}
@@ -288,7 +352,14 @@ class News {
 						$item['last_action'] = $newsPipelines[$item['id']];
 					}
 					if ($newsFlags[$item['id']]) {
-						$item['flags'] = $newsFlags[$item['id']];
+						$localFlags = $newsFlags[$item['id']];
+						foreach($localFlags as $item) {
+							if ($item['is_tag']) {
+								$item['tags'][] = $item;
+							} else {
+								$item['keywords'][] = $item;
+							}
+						}
 					}
 				}
 			}
@@ -301,11 +372,23 @@ class News {
 		return 3;
 	}	
 
-	public static function setStage($id, $stageId, $userId) {
+	public static function setStage($id, $stageId, $userId, $comment) {
 		$id = (int) $id;
 		$stageId = (int) $stageId;
 		$userId = (int) $userId;
-		DB::query("UPDATE l_news S SET is_deleted=1 WHERE id=$id");
+		$comment = DB::escape($comment);
+		$news = self::get($id);
+		if ($news) {
+			if ($stageId != $news['stage_id']) {
+				DB::query("UPDATE l_news SET stage_id=$stageId WHERE id=$id");
+				$higherId = DB::getValue("SELECT id FROM l_stages WHERE id IN ($news[stage_id], $stageId) ORDER BY oid DESC");
+				if ($higherId == $stageId) $type = PIPELINE_ADVANCE; else $type = PIPELINE_REVERT;
+				if ($stageId == 2) $type = PIPELINE_TRASH;
+				$actionData = [ "type" => $type ];
+				if ($comment) $actionData['comment'] = $comment;
+				$newActionId = self::advancePipeline($id, $actionData);
+			}
+		}
 		self::touch($id, $userId);
 	}
 
@@ -327,7 +410,33 @@ class News {
 			$data['user_id'] = $userId;
 			DB::insert("l_news_pipeline", $data);
 			$iid = DB::insertId();
-			self::touch($id, $userId);
+			if ($iid and $data['files']) {
+				foreach($data['files'] as $key=>$file) {
+					if ($file['tmp_name']) {
+						$hash = md5(json_encode($file));
+						$newPath = $root."/upload/".substr($hash,0,2);
+						if (!file_exists($newPath)) mkdir($root."/upload", 0777, true);
+						move_uploaded_file($file['tmp_name'], $newPath."/".$hash);
+						$fileData = [ "type" => 0, "name" => $file['name'], "hash" => $hash, "origin_name" => $file['name'], "mime" => $file['type'], "size" => $file['size'], "origin_key" => $key ];
+						$fileId = Files::create($fileData);
+						if ($fileId) {
+							self::addFile($iid, $fileId, $userId);
+						}
+					} else {
+						$path = $file['path'];
+						if (file_exists($path)) {
+							$fileName = array_pop(explode("/", $path));
+							if (!$file['title']) $file['title'] = $fileName;
+							$fileData = [ "type" => 0, "name" => $file['title'], "origin_name" => $fileName, "mime" => $file['mime'], "size" => filesize($file['path']) ];
+							$fileId = Files::create($fileData);
+							if ($fileId) {
+								self::addFile($iid, $fileId, $userId);
+							}
+						}
+					}
+				}
+				self::touch($id, $userId);
+			}
 			return $iid;
 		} else {
 			return 0;
@@ -353,18 +462,18 @@ class News {
 	}
 
 	public static function addFile($pipelineId, $fileId, $userId) {
-		$id = (int) $id;
+		$pipelineId = (int) $pipelineId;
 		$fileId = (int) $fileId;
 		$userId = (int) $userId;
-		DB::insert("l_news_files", [ "pipeline_id" => $id, "file_id" => $fileId, "added_by" => $userId, "add_time" => time() ]);
+		DB::insert("l_news_files", [ "pipeline_id" => $pipelineId, "file_id" => $fileId, "added_by" => $userId, "add_time" => time() ]);
 		self::touch($id, $userId);
 	}
 	
 	public static function removeFile($id, $fileId, $userId) {
-		$id = (int) $id;
+		$pipelineId = (int) $pipelineId;
 		$flagId = (int) $flagId;
 		$userId = (int) $userId;
-		DB::query("DELETE FROM l_news_files WHERE news_id=$id AND file_id=$fileId");
+		DB::query("DELETE FROM l_news_files WHERE pipeline_id=$pipelineId AND file_id=$fileId");
 		self::touch($id, $userId);
 	}
 	
@@ -373,6 +482,7 @@ class News {
 		$flagId = (int) $flagId;
 		$userId = (int) $userId;
 		DB::insert("l_news_flags", [ "news_id" => $id, "flag_id" => $flagId, "set_by" => $userId, "set_time" => time() ]);
+		self::advancePipeline($id, [ "type" => PIPELINE_FLAG, "subtype" => "add", "flag_id" => $flagId ], $userData);
 		self::touch($id, $userId);
 	}
 	
@@ -381,10 +491,15 @@ class News {
 		$flagId = (int) $flagId;
 		$userId = (int) $userId;
 		DB::query("DELETE FROM l_news_flags WHERE news_id=$id AND flag_id=$flagId");
+		self::advancePipeline($id, [ "type" => PIPELINE_FLAG, "subtype" => "remove", "flag_id" => $flagId ], $userData);
 		self::touch($id, $userId);
 	}
 	
 }
+
+
+// -----------------------------------------------------------------------
+
 
 class Files {
 	
@@ -427,7 +542,7 @@ class Files {
 		$id = (int) $id;
 		$data = DB::getSingle("SELECT * FROM l_files WHERE id=$id AND is_deleted=0");
 		if ($data) {
-			$data['thumbnails'] = json_decode($data['thumbnails']);
+			$data['thumbnails'] = json_decode($data['thumbnails'], true);
 			if (!$data['thumbnails']) $data['thumbnails'] = [];
 		}
 		return $data;
@@ -443,7 +558,7 @@ class Files {
 		$limit = $startFrom.",".$onPage;
 		$data = DB::query("SELECT * FROM l_files WHERE $where ORDER BY $order LIMIT $limit");
 		foreach($data as $key=>$item) {
-			$item['thumbnails'] = json_decode($item['thumbnails']);
+			$item['thumbnails'] = json_decode($item['thumbnails'], true);
 			if (!$item['thumbnails']) $item['thumbnails'] = [];
 			$data[$key] = $item;
 		}
@@ -451,6 +566,10 @@ class Files {
 	}
 	
 }
+
+
+// -----------------------------------------------------------------------
+
 
 class Users {
 	
@@ -524,11 +643,15 @@ class Users {
 	
 }
 
+
+// -----------------------------------------------------------------------
+
+
 class Roles {
 		
 	public static function getAll() {
 		$out = [];
-		$data = DB::query("SELECT * FROM l_users");
+		$data = DB::query("SELECT * FROM l_roles");
 		foreach($data as $key=>$item) {
 			$out[$item['id']] = $item;
 		}
@@ -536,6 +659,10 @@ class Roles {
 	}
 	
 }
+
+
+// -----------------------------------------------------------------------
+
 
 class Stages {
 		
@@ -549,6 +676,80 @@ class Stages {
 	}
 	
 }
+
+
+// -----------------------------------------------------------------------
+
+
+class Notifications {
+
+	public static function get($userId, $id) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		$data = DB::getSingle("SELECT * FROM l_notifications WHERE id=$id AND user_to=$userId AND is_deleted=0");
+		return $data;
+	}
+
+	public static function getList($userId, $data) {
+		$userId = (int) $userId;
+		$where = "";
+		$order = "id DESC";
+		$onPage = 20;
+		$startFrom = 0;
+		if ($data['offset']) $startFrom = (int) $data['offset'];
+		if ($data['limit']) $onPage = (int) $data['limit'];
+		$limit = $startFrom.",".$onPage;
+		if ($data['news_id']) $where .= " AND news_id=".((int) $data['news_id']);
+		if ($data['fresh_only']) $where .= " AND is_fresh=1";
+		$data = DB::query("SELECT * FROM l_notifications WHERE user_to=$userId $where ORDER BY $order LIMIT $limit");
+		foreach($data as $key=>$item) {
+			$item['data'] = json_decode($item['data'], true);
+			$data[$key] = $item;
+		}
+		return $data;
+	}
+
+	public static function getFreshCount($userId) {
+		$userId = (int) $userId;
+		$notificationCount = DB::getValue("SELECT COUNT(*) FROM l_notifications WHERE user_to=$userId AND is_fresh=1");
+		return $notificationCount;
+	}
+	
+	public static function getLastId() {
+		$notificationId = DB::getValue("SELECT MAX(id) FROM l_notifications");
+		return $notificationId;
+	}
+
+	public static function mark($userId, $id) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		DB::query("UPDATE l_notifications SET is_fresh=0 WHERE id=$id AND user_to=$userId");
+	}
+
+	public static function markTo($userId, $id) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		DB::query("UPDATE l_notifications SET is_fresh=0 WHERE user_to=$userId AND is_fresh=1 AND id<=$id");
+	}
+	
+}
+
+
+// -----------------------------------------------------------------------
+
+
+class Utility {
+
+	public static function getLastActionId() {
+		$actionId = DB::getValue("SELECT MAX(id) FROM l_news_pipeline");
+		return $actionId;
+	}
+
+}
+
+
+// -----------------------------------------------------------------------
+
 
 class Sources {
 
@@ -593,6 +794,12 @@ class Sources {
 		$data = DB::getSingle("SELECT * FROM l_sources WHERE id=$id AND is_deleted=0");
 		return $data;
 	}
+
+	public static function getByDomain($name) {
+		$name = DB::escape("%\\\\".$name."%");
+		$data = DB::getSingle("SELECT * FROM l_sources WHERE url LIKE $name AND is_deleted=0");
+		return $data;
+	}
 	
 	public static function getList($data) {
 		$where = "is_deleted=0";
@@ -610,12 +817,5 @@ class Sources {
 	}
 	
 }
-
-/*
-$newsId = News::create([
-	"source_url" => "http://yandex.ru",
-	"title" => "Боже мой, это же Яндекс",
-	"synopsis" => "Какой-то краткий текст" ]);
-*/
 
 ?>

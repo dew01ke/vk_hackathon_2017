@@ -1,0 +1,13 @@
+DirectoryIndex index.php
+
+ErrorDocument 404 /404
+DirectorySlash off
+
+RewriteEngine on
+
+RewriteCond %{REQUEST_URI} ^.*
+RewriteRule ^api\/(.*)$ api.php?request_path=$1 [L,QSA]
+
+Options -Indexes
+
+AddDefaultCharset UTF-8
