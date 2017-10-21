@@ -71,7 +71,7 @@ function Api() {
                 if ('error' in r && r.error)
                     _this.triggerEvent('error', {error:r.error}, target);
                 else
-                    _this.triggerEvent('news:get', {news:r.list}, target);
+                    _this.triggerEvent('news:get', { count_by_stage: r.count_by_stage, news: r.list, user_profile: r.user_profile }, target);
             });
         },
         setStage: function(params, target) {
@@ -102,6 +102,16 @@ function Api() {
                     _this.triggerEvent('error', {error:r.error}, target);
                 else
                     _this.triggerEvent('news:rate', { success: (r.status === 100 && r.statusMessage === 'OK') }, target);
+            });
+        },
+        update: function(params, target) {
+            params.origin_id =_this.user_id;
+            params.token = _this.user_token;
+            $.post(base + 'api/news/update', params).done(function(r) {
+                if ('error' in r && r.error)
+                    _this.triggerEvent('error', {error:r.error}, target);
+                else
+                    _this.triggerEvent('news:update', { success: (r.status === 100 && r.statusMessage === 'OK') }, target);
             });
         }
 //	add: function({params}, target) {
