@@ -1,2 +1,3 @@
-backend/upload
-frontend/upload
+frontend/upload/*
+frontend/templates/compiled/*
+frontend/cache/*

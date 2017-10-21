@@ -2,8 +2,6 @@
 
 require_once("lt_core.php");
 
-$root = dirname(__FILE__);
-
 const 	PIPELINE_CREATE = 0,
 		PIPELINE_ADVANCE = 1,
 		PIPELINE_REVERT = 2,

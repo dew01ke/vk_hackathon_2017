@@ -2,6 +2,9 @@
 
 error_reporting(1);
 
+$root = dirname(__FILE__);
+$smarty = null;
+
 class DB {
 
 	private static $config = [
@@ -121,6 +124,18 @@ class DB {
 		die("[SQL error ".$errNo.": ".$errText."]");
 	}
 	
+}
+
+function initSmarty() {
+	global $smarty, $root;
+	$smarty = new \Smarty;
+	$smarty->debugging=false;
+	$smarty->caching=false;
+	$smarty->cache_lifetime=0;
+	$smarty->template_dir = $root.'/templates';
+	$smarty->compile_dir = $root.'/templates/compiled';
+	$smarty->cache_dir = $root.'/cache';
+	$smarty->config_dir = $root.'/cache';
 }
 
 function writeLog($type, $name, $context, $data) {	
