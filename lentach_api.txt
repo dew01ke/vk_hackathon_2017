@@ -1,0 +1,212 @@
+flags/create
+	name (string)
+	is_tag (0/1)
+	is_keyword (0/1)
+	priority (int)
+flags/delete
+	id (int)
+flags/get
+	id (int)
+flags/getByName
+	name (int)
+	is_keyword (0/1/2 - все/только теги/только ключевые слова)
+flags/getList
+	ids (array/csv)
+	offset (int)
+	limit (int)
+	stage_id (int)
+	added_before (int, timestamp)
+	added_after (int, timestamp)
+	published_before (int, timestamp)
+	published_after (int, timestamp)
+	source_id (int)
+	origin_user (int)
+	flag_id (int)
+
+/* ---------------------------------------------------------------------------- */
+	
+news/create
+	title (string)
+	synopsis (string)
+	text (string)
+	stage_id (int)
+	source_id (int)
+	source_url (string)
+	origin_user (string)
+	origin_data (object)
+	is_anonymous (0/1)
+	priority (int)
+	trust_level (float)
+	truth_level (float)
+	dup_level (float)
+	files (array)
+	ext_user (object)
+		first_name (string)
+		last_name (string)
+		mid_name (string)
+		id (string)
+		handle (string)
+		channel (string, пока "vk")
+		profile (object, сырой вывод профиля ВК, заменяет first_name/last_name/handle)
+news/update
+	title (string)
+	synopsis (string)
+	text (string)
+	source_url (string)
+	publish_url (string)
+	publish_time (int, timestamp)
+	priority (int)
+	reward_amount (float)
+	reward_status (int)
+news/delete
+	id (int)
+news/get
+	id (int)
+news/getFlags
+	id (int)
+news/getPipeline
+	id (int)
+news/getList
+	ids (array/csv)
+	offset (int)
+	limit (int)
+news/setStage
+	id (int)
+	stage_id (int)
+news/addComment
+	id (int)
+	comment (string)
+news/advancePipeline
+	id (int)
+	type (int, список в начале lt_entities.php, PIPELINE_*)
+	comment (string)
+	bonus (int)
+	data (object, произвольная нагрузка)
+news/rate
+	id (int)
+	rating (-1/0/1)
+news/block
+	id (int)
+news/unblock
+	id (int)
+news/addFile
+	id (int)
+	file_id (int)
+news/removeFile
+	id (int)
+	file_id (int)
+news/addFlag
+	id (int)
+	flag_id (int)
+news/removeFlag
+	id (int)
+	flag_id (int)
+
+/* ---------------------------------------------------------------------------- */
+	
+files/create
+	(тут некоторые свойства очевидно не должны быть открыты наружу, но пока неважно)
+	type (int, пока 0)
+	name (string, человеческое имя, при загрузке равно имени файла)
+	hash (string)
+	mime (string)
+	origin_key (string, ключ файла в форме)
+	origin_name (string, имя файла при загрузке)
+	comment (string)
+	metadata (object)
+	size (int)
+	thumbnails (object)
+files/delete
+	id (int)
+files/get
+	id (int)
+files/getList
+	ids (array/csv)
+	offset (int)
+	limit (int)
+	
+/* ---------------------------------------------------------------------------- */
+
+users/create
+	first_name (string)
+	last_name (string)
+	mid_name (string)
+	role_id (int)
+	channel / origin_channel (string)
+	id / origin_id (string)
+	handle / origin_handle (string)
+	origin_data (object)
+users/update
+	id (int)
+	first_name (string)
+	last_name (string)
+	mid_name (string)
+	role_id (int)
+	is_blacklisted (0/1)
+users/delete
+	id (int)
+users/get
+	id (int)
+users/getByOrigin
+	channel (string)
+	id (string)
+	handle (string)
+users/getList
+	ids (array/csv)
+	offset (int)
+	limit (int)
+
+/* ---------------------------------------------------------------------------- */
+
+roles/getAll
+
+/* ---------------------------------------------------------------------------- */
+
+stages/getAll
+
+/* ---------------------------------------------------------------------------- */
+
+sources/create
+	name (string)
+	comment (string)
+	url (string)
+	domain (string)
+	latency (int)
+	trust_level (float)
+sources/update
+	id (int)
+	name (string)
+	comment (string)
+	url (string)
+	domain (string)
+	latency (int)
+	trust_level (float)
+	is_blacklisted (0/1)
+sources/delete
+	id (int)
+sources/blacklist
+	id (int)
+sources/get
+	id (int)
+sources/getByDomain
+	name (string)
+sources/getList
+	ids (array/csv)
+	offset (int)
+	limit (int)
+
+/* ---------------------------------------------------------------------------- */
+
+notifications/get
+	id (int)
+notifications/getList
+	offset (int)
+	limit (int)
+notifications/getFreshCount
+notifications/getLastId
+
+/* ---------------------------------------------------------------------------- */
+
+utility/getLastActionId
+
+
