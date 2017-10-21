@@ -15,7 +15,8 @@
 
     var cache = {
         application: $('#application'),
-        auth_required: $('#auth-required')
+        auth_required: $('#auth-required'),
+        header_navigation: $('.nav-link[data-location]')
     };
 
     var router = {
@@ -92,6 +93,11 @@
         });
 
         router.onInit();
+
+        cache.header_navigation.click(function() {
+            cache.header_navigation.removeClass('active');
+            $(this).addClass('active');
+        });
     }
 
     onInit();
