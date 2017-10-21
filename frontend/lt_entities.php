@@ -273,8 +273,16 @@ class News {
 			} else {
 				DB::query("DELETE FROM l_news_rating WHERE news_id=$id AND user_id=$userId");
 			}
-			$rating = DB::getValue("SELECT SUM(rating) FROM l_news_rating WHERE news_id=$id");
-			DB::query("UPDATE l_news SET rating=$rating WHERE id=$id");
+			$ratingList = DB::query("SELECT rating, SUM(rating) AS s FROM l_news_rating WHERE news_id=$id GROUP BY rating");
+			$totalRating = 0;
+			$upRating = 0;
+			$downRating = 0;
+			foreach($ratingList as $item) {
+				$totalRating += $item['s'];
+				if ($item['rating'] < 0) $downRating += $item['s'];
+				if ($item['rating'] > 0) $upRating += $item['s'];
+			}
+			DB::query("UPDATE l_news SET rating=$totalRating, rating_up=$upRating, rating_down=$downRating WHERE id=$id");
 			self::touch($id, $userId);
 			return $rating;
 		} else {
@@ -332,6 +340,10 @@ class News {
 				} else {
 					$data['keywords'][] = $item;
 				}
+			}
+			$ratingList = DB::query("SELECT * FROM l_news_rating WHERE news_id=$id");
+			foreach($ratingList as $item) {
+				$data['rating_list'][$item['user_id']] = $item['rating'];
 			}
 		}
 		return $data;
@@ -428,11 +440,19 @@ class News {
 		$newsFlags = [];
 		$newsActions = [];
 		$relatedUsers = [];
+		$allRatings = [];
 		foreach($data as $key=>$item) {
 			$newsFlags[$item['id']] = [];
 			$newsActions[$item['id']] = [];
+			$allRatings[$item['id']] = [];
 			if ($item['origin_user']) $relatedUsers[$item['origin_user']] = [];
 			if ($item['touched_by']) $relatedUsers[$item['touched_by']] = [];
+		}
+		if (count($allRatings)) {
+			$ratingList = DB::query("SELECT * FROM l_news_rating WHERE news_id IN (".implode(",",array_keys($allRatings)).")");
+			foreach($ratingList as $item) {
+				$allRatings[$item['news_id']][$item['user_id']] = $item['rating'];
+			}
 		}
 		if (count($relatedUsers)) {
 			$userList = Users::getList([ "ids" => array_keys($relatedUsers) ]);
@@ -500,6 +520,9 @@ class News {
 			}
 		}
 		foreach($data as $key=>$item) {
+			if ($allRatings[$item['id']]) {
+				$item['rating_list'] = $allRatings[$item['id']];
+			}
 			if ($item['origin_user']) {
 				if ($relatedUsers[$item['origin_user']]) {
 					$item['origin_user'] = $relatedUsers[$item['origin_user']];
@@ -831,12 +854,25 @@ class Files {
 
 class Users {
 	
-	public static function auth($token) {
-		$result = VK::tryToken($token);
-		if ($result) {
-			return true;
+	public static function auth($token, $originId) {
+		VK::setToken($token);
+		$profile = VK::getUserProfile($originId);
+		if ($profile) {
+			$originId = $profile['id'];
+			$firstName = $profile['first_name'];
+			$lastName = $profile['last_name'];
+			$existingUser = self::getByOrigin("vk", $originId);
+			if ($existingUser) {
+				return $existingUser;
+			} else {
+				$newUserId = self::create([ "channel" => "vk", "origin_id" => $originId, "first_name" => $firstName, "last_name" => $lastName ]);
+				if ($newUserId) {
+					$newUser = self::get($newUserId);
+					return $newUser;
+				}
+			}
 		} else {
-			return false;
+			return null;
 		}
 	}
 	
@@ -1072,6 +1108,15 @@ class Notifications {
 
 
 class Stats {
+
+	public static function getNewsByStage() {
+		$data = DB::query("SELECT stage_id, COUNT(*) AS `c` FROM l_news WHERE is_deleted=0 GROUP BY stage_id");
+		$out = [];
+		foreach($data as $item) {
+			$out[$item['stage_id']] = $item['c'];
+		}
+		return $out;
+	}
 
 	public static function getAcceptedStats($data) {
 		$dateFrom = date("Y-m-d", strtotime("-30 day"));

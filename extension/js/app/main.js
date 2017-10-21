@@ -19,7 +19,10 @@
         header_navigation: $('.nav-link[data-location]')
     };
     var stagesCache = {};
-    var newsCache = {};
+    var newsCache = {
+        list_by_stages: {},
+        user_profile: null
+    };
 
     var router = {
         activeRoute: {
@@ -107,9 +110,12 @@
 
     function onInit() {
         sendBackgroundRequest('get_auth_state', null, function(data) {
-            if (data && data.user_id) {
+            if (data && data.user_id && data.user_token) {
                 cache.view_application.show();
                 cache.view_auth_required.hide();
+
+                api.user_id = data.user_id;
+                api.user_token = data.user_token;
 
                 requestStages();
             } else {
@@ -137,9 +143,15 @@
 
                 template += '<li class="list-group-item article-preview" data-article-id="' + article.id + '" data-stage-id="' + stageID + '">';
 
-                template += '<div class="article-preview-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
+                template += '<div class="article-preview-time">';
+                template += time.format('DD.MM') + ' в ' + time.format('HH:mm');
+                template += '<span class="article-preview-sender">' + renderUserProfile(article, false, 'От: ') + '</span>';
+                template += '</div>';
+
                 template += '<div class="article-preview-title">' + article.title + '</div>';
                 template += '<div class="article-preview-text">' + article.synopsis + '</div>';
+
+                template += '<button data-article-id="' + article.id + '" type="button" class="article-preview-remove-button btn btn-right btn-outline-secondary btn-sm"><span class="oi oi-trash"></span></button>';
 
                 template += '</li>';
             }
@@ -151,7 +163,7 @@
         return template;
     }
 
-    function getArticleFullTemplate(article) {
+    function getArticleFullTemplate(article, user) {
         var template = '';
 
         if (article) {
@@ -162,27 +174,14 @@
             template += '<div class="article-full-time">' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
             template += '<div class="article-full-text" contentEditable>' + ((article.synopsis === '') ? '(Текст)' : article.synopsis) + '</div>';
 
-            if (article.origin_user && article.origin_user.first_name && article.origin_user.last_name && article.origin_user.origin_channel && article.origin_user.origin_id) {
-                var name = article.origin_user.first_name + ' ' + article.origin_user.last_name;
-                var link = name;
-
-                switch(article.origin_user.origin_channel) {
-                    case 'vk':
-                        link = '<a target="blank" href="https://vk.com/id' + article.origin_user.origin_id + '">' + name + '</a>';
-                        break;
-                    default:
-                        link = name;
-                }
-
-                template += '<div class="article-full-time">Отправил: ' + link + '</div>';
-            }
+            template += '<div class="article-full-time">' + renderUserProfile(article, true, 'Отправил: ') + '</div>';
 
             if (touched) {
                 template += '<div class="article-full-time">Последнее изменение: ' + touched.locale('ru').fromNow() + '</div>';
             }
 
             template += '<div class="article-full-controls">';
-            template += '<button type="button" class="btn btn-success btn-sm">Сохранить</button>';
+            template += '<button data-article-id="' + article.id + '" type="button" class="article-full-save-button btn btn-success btn-sm">Сохранить</button>';
 
 
             template += '<div class="btn-group">';
@@ -192,9 +191,21 @@
             template += '</div>';
             template += '</div>';
 
+            var buttonUpvoteClass = 'btn-outline-success',
+                buttonDownvoteClass = 'btn-outline-danger';
+            if (article.rating_list && user && user.id) {
+                var uid = parseInt(user.id);
+                if (article.rating_list.hasOwnProperty(uid)) {
+                    if (article.rating_list[uid] > 0) {
+                        buttonUpvoteClass = 'btn-success';
+                    } else {
+                        buttonDownvoteClass = 'btn-danger';
+                    }
+                }
+            }
 
-            template += '<button type="button" class="btn btn-right btn-outline-success btn-sm">+1</button>';
-            template += '<button type="button" class="btn btn-right btn-outline-danger btn-sm">-1</button>';
+            template += '<button data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonUpvoteClass + '">+1</button>';
+            template += '<button data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonDownvoteClass + '">-1</button>';
             template += '</div>'; //controls
 
         } else {
@@ -224,7 +235,7 @@
                 for (let i in collection) {
                     let stage = collection[i];
 
-                    html += '<li class="nav-item">';
+                    html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
                     if (isStageFirst && stagesCount === 0) {
                         isStageFirst = false;
                         html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '">' + stage.name + '</a>';
@@ -244,12 +255,12 @@
                             content += '<div class="sections" data-section="stage' + stage.id + stage.name + '">';
                         }
 
-                        content += '<div class="row">';
-                        content += '<div class="col">';
+                        content += '<div class="row article-list-row">';
+                        content += '<div class="col article-list-col">';
                         content += getNewsListTemplate(news.news, stage.id);
                         content += '</div>';
-                        content += '<div class="col workflow article-full">';
-                        content += '</div>'; //workflow
+                        content += '<div class="col article-full"><div class="workflow">';
+                        content += '</div></div>'; //workflow
                         content += '</div>'; //row
                         content += '</div>'; //section
 
@@ -261,7 +272,8 @@
                             router.activeRoute.active_section = section;
                         }
 
-                        newsCache[stage.id] = news.news;
+                        newsCache.list_by_stages[stage.id] = news.news;
+                        newsCache.user_profile = news.user_profile;
                         stagesCount++;
                     }, 'getStageContent' + stage.id);
 
@@ -284,18 +296,52 @@
         return template;
     }
 
+    function renderUserProfile(article, wrapByLink, beforeText) {
+        var output = '';
+
+        if (article.origin_user && article.origin_user.first_name && article.origin_user.last_name && article.origin_user.origin_channel && article.origin_user.origin_id) {
+            var name = article.origin_user.first_name + ' ' + article.origin_user.last_name;
+
+            switch(article.origin_user.origin_channel) {
+                case 'vk':
+                    if (wrapByLink) {
+                        output = '<a target="blank" href="https://vk.com/id' + article.origin_user.origin_id + '">' + name + '</a>';
+                    } else {
+                        output = name;
+                    }
+                    break;
+                default:
+                    output = name;
+            }
+        }
+
+        if (beforeText && output !== '') {
+            output = beforeText + output;
+        }
+
+        return output;
+    }
+
+    function renderUserData() {
+
+    }
+
+    function renderArticlePipeline() {
+
+    }
+
     $(document).on('click', '.article-preview', function(e) {
         var that = $(this);
         var articleID = that.attr('data-article-id');
         var stageID = that.attr('data-stage-id');
 
         if (articleID && stageID) {
-            if (newsCache.hasOwnProperty(stageID)) {
-                var article = newsCache[stageID].filter(function(v) {
+            if (newsCache.list_by_stages.hasOwnProperty(stageID)) {
+                var article = newsCache.list_by_stages[stageID].filter(function(v) {
                     return (v.id === articleID);
                 }).pop();
                 if (article) {
-                    var html = getArticleFullTemplate(article);
+                    var html = getArticleFullTemplate(article, newsCache.user_profile);
                     var container = (router.activeRoute && router.activeRoute.active_section) ? router.activeRoute.active_section.find('.workflow') : null;
 
                     if (container) {
@@ -335,6 +381,94 @@
             }, 'setStage');
 
             api.news.setStage({ id: articleID, stage_id: stageID }, 'setStage');
+        }
+    });
+
+    $(document).on('click', '.article-preview-remove-button', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var that = $(this);
+        var articleID = that.attr('data-article-id');
+
+        if (articleID) {
+            api.on('news:delete', function(e, response) {
+                api.off('news:delete', 'articleRemove');
+
+                if (response.success) {
+                    var parent = that.closest('.article-preview');
+                    parent.remove();
+                } else {
+                    alert('При удалении статьи возникла ошибка');
+                }
+            }, 'articleRemove');
+
+            api.news.delete({ id: articleID }, 'articleRemove');
+        }
+    });
+
+    $(document).on('click', '.article-full-rate-button', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var that = $(this);
+        var articleID = that.attr('data-article-id');
+        var rateType = that.attr('data-article-rate');
+        var rating = 0;
+
+        if (articleID && rateType) {
+            if (rateType === 'upvote') {
+                rating = 1;
+            } else {
+                rating = -1;
+            }
+
+            if (rateType === 'upvote' && that.hasClass('btn-success') ||
+                rateType === 'downvote' && that.hasClass('btn-danger')) {
+                rating = 0;
+            }
+
+            api.on('news:rate', function(e, response) {
+                api.off('news:rate', 'articleRate');
+
+                if (response.success) {
+                    if (rateType === 'upvote') {
+                        that.toggleClass('btn-outline-success btn-success');
+                    } else {
+                        that.toggleClass('btn-outline-danger btn-danger');
+                    }
+                } else {
+                    alert('При оценивании статьи возникла ошибка');
+                }
+            }, 'articleRate');
+
+            api.news.rate({ id: articleID, rating: rating }, 'articleRate');
+        }
+    });
+
+    $(document).on('click', '.article-full-save-button', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var that = $(this);
+        var articleID = that.attr('data-article-id');
+
+        if (articleID) {
+            var parent = that.closest('.workflow');
+            var articleTitle = parent.find('.article-full-title').text();
+            var articleSynopsis = parent.find('.article-full-text').text();
+
+            api.on('news:update', function(e, response) {
+                api.off('news:update', 'articleUpdate');
+
+                if (response.success) {
+                    alert('Статья успешно сохранена');
+                } else {
+                    alert('При сохранении статьи возникла ошибка');
+                }
+            }, 'articleUpdate');
+
+            api.news.update({ id: articleID, title1: articleTitle, synopsis1: articleSynopsis }, 'articleUpdate');
         }
     });
 

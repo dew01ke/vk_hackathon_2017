@@ -33,14 +33,20 @@ if (!$request) $request = [];
 if ($_FILES and !$request['files']) $request['files'] = $_FILES;
 
 $userId = 0;
-$extUserId = 0;
-if ($_SESSION['vk']) {
-	$vkData = $_SESSION['vk'];
-	$extToken = $vkData['access_token'];
-	$extUserId = (int) $vkData['viewer_id'];
-	// Users::auth($token);
+$userData = array();
+if ($request['token']) {
+	$extToken = $request['token'];
+	$originId = $request['origin_id'];
+	$userData = Users::auth($token, $originId);
+	if ($userData) {
+		$userId = $userData['id'];
+	} else {
+		$reply['status'] = 201;
+		$reply['statusMessage'] = "Authentication failed.";
+	}
 }
 
+if ($userData) {
 switch ($requestEntity) {
 
 		case "flags": {
@@ -210,6 +216,7 @@ switch ($requestEntity) {
 					$data = News::getList($request);
 					if ($data) {
 						$reply['list'] = $data;
+						$reply['count_by_stage'] = Stats::getNewsByStage();
 						$success = true;
 					}
 				
@@ -496,6 +503,25 @@ switch ($requestEntity) {
 		
 		break;
 
+		case "stats":
+		
+			switch ($requestMethod) {
+				
+				case "countByStage": {
+
+					$list = Stats::getNewsByStage();
+					if ($list) {
+						$reply['count_by_stage'] = $list;
+						$success = true;
+					}
+					
+					break;
+				}
+				
+			}
+		
+		break;
+
 		case "sources": {
 		
 			switch ($requestMethod) {
@@ -664,6 +690,13 @@ switch ($requestEntity) {
 			break;
 		}
 		
+}
+$reply['user_profile'] = $userData;
+} else {
+	if (!$reply['status']) {
+		$reply['status'] = 200;
+		$reply['statusMessage'] = "Not authenticated.";
+	}
 }
 
 if ($success) {
