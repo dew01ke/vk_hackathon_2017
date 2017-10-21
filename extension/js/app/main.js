@@ -335,13 +335,12 @@
         var articleID = that.attr('data-article-id');
         var stageID = that.attr('data-stage-id');
 
-        if (articleID && stageID) {
-            if (newsCache.list_by_stages.hasOwnProperty(stageID)) {
-                var article = newsCache.list_by_stages[stageID].filter(function(v) {
-                    return (v.id === articleID);
-                }).pop();
-                if (article) {
-                    var html = getArticleFullTemplate(article, newsCache.user_profile);
+        if (articleID) {
+            api.on('news:getOne', function(e, response) {
+                api.off('news:getOne', 'articleGetOne');
+
+                if (response.item && response.user_profile) {
+                    var html = getArticleFullTemplate(response.item, response.user_profile);
                     var container = (router.activeRoute && router.activeRoute.active_section) ? router.activeRoute.active_section.find('.workflow') : null;
 
                     if (container) {
@@ -349,12 +348,30 @@
                     } else {
                         console.log('container for workflow not found', router.activeRoute);
                     }
-                } else {
-                    console.log('(1) article not found in article list cache', stageID, articleID, article, newsCache);
                 }
-            } else {
-                console.log('(2) article not found in article list cache', stageID, articleID, newsCache);
-            }
+            }, 'articleGetOne');
+
+            api.news.getOne({ id: articleID }, 'articleGetOne');
+
+            // if (newsCache.list_by_stages.hasOwnProperty(stageID)) {
+            //     var article = newsCache.list_by_stages[stageID].filter(function(v) {
+            //         return (v.id === articleID);
+            //     }).pop();
+            //     if (article) {
+            //         var html = getArticleFullTemplate(article, newsCache.user_profile);
+            //         var container = (router.activeRoute && router.activeRoute.active_section) ? router.activeRoute.active_section.find('.workflow') : null;
+            //
+            //         if (container) {
+            //             container.html(html);
+            //         } else {
+            //             console.log('container for workflow not found', router.activeRoute);
+            //         }
+            //     } else {
+            //         console.log('(1) article not found in article list cache', stageID, articleID, article, newsCache);
+            //     }
+            // } else {
+            //     console.log('(2) article not found in article list cache', stageID, articleID, newsCache);
+            // }
         }
 
         var visibleArticlePreview = $('.article-preview').filter(':visible').removeClass('article-preview-active');
@@ -468,7 +485,7 @@
                 }
             }, 'articleUpdate');
 
-            api.news.update({ id: articleID, title1: articleTitle, synopsis1: articleSynopsis }, 'articleUpdate');
+            api.news.update({ id: articleID, title: articleTitle, synopsis: articleSynopsis }, 'articleUpdate');
         }
     });
 

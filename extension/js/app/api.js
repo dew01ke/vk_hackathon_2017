@@ -56,12 +56,14 @@ function Api() {
 //	}
 //    };
     _this.news = {
-        getOne: function(id, target) {
-            $.get(base + 'api/news/get', { origin_id: _this.user_id, token: _this.user_token, id: id }).done(function(r) {
+        getOne: function(params, target) {
+            params.origin_id =_this.user_id;
+            params.token = _this.user_token;
+            $.post(base + 'api/news/get', params).done(function(r) {
             if ('error' in r && r.error)
                 _this.triggerEvent('error', {error:r.error}, target);
             else
-                _this.triggerEvent('news:getOne', {newsItem:r.newsItem}, target);
+                _this.triggerEvent('news:getOne', { item: r.item, user_profile: r.user_profile }, target);
             });
         },
         get: function(params, target) {
