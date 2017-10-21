@@ -21,7 +21,26 @@
       </div>
       {/foreach}
     </div>
-    <form action="vk-iframe.php/addNews" method="POST" id="news-item-form">
+    <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript">
+      $('a.post').click(function(e){
+      e.preventDefault();
+      var ok = confirm('Действительно безвозвратно удалить запись?');
+      if (!ok)
+      return;
+      $.post(this.href, {}).done(function(data){
+      if ('errors' in data && data.errors.length) {
+      alert(data.errors.join("\n"));
+      } else {
+      alert(data.messages.join("\n"));
+      window.location.reload();
+      }
+      }).fail(function(){
+      alert('Что-то пошло не так');
+      });
+      });
+    </script>
+    <form action="vk-iframe.php/news/add" method="POST" id="news-item-form">
       <fieldset>
 	<div class="item">
 	  <input type="file" multiple="multiple" name="image" placeholder="Изображение к новости"/>
@@ -44,6 +63,18 @@
 	</div>
       </fieldset>
     </form>
+    <script type="text/javascript">
+      var form = $('#news-item-form');
+      form.submit(function(e) {
+      e.preventDefault();
+      $.post('/vk-iframe.php/news/add', form.serialize()).done(function(data){
+      if ('errors' in data && data.errors.length)alert(data.errors.join("\n"));
+      else window.location.reload();
+      }).fail(function(){
+      alert('Что-то пошло не так');
+      });
+      });
+    </script>
     <div class="top-3">
 
       <div class="top">
@@ -61,32 +92,5 @@
       
     </div>
     
-    <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
-    <script type="text/javascript">
-      var form = $('#news-item-form');
-      form.submit(function(e) {
-      e.preventDefault();
-      $.post('/vk-iframe.php/news/add', form.serialize()).done(function(data){
-      if ('errors' in data && data.errors.length)alert(data.errors.join("\n"));
-      else window.location.reload();
-      }).fail(function(){
-      alert('Что-то пошло не так');
-      });
-      });
-
-      $('a.post').click(function(e){
-      e.preventDefault();
-      $.post(this.href, {}).done(function(data){
-      if ('errors' in data && data.errors.length) {
-      alert(data.errors.join("\n"));
-      } else {
-      alert(data.messages.join("\n"));
-      window.location.reload();
-      }
-      }).fail(function(){
-      alert('Что-то пошло не так');
-      });
-      });
-    </script>
   </body>
 </html>

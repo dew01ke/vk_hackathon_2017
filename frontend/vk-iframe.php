@@ -30,6 +30,7 @@ if (!$vkUserId) {
   exit;
 }
 
+$user = \Users::getByOrigin($vkUserId);
 
 $root = '.';
 initSmarty();
@@ -49,8 +50,8 @@ class Request
 $r = new \Request();
 $matches = [];
 if ($r->path === '' || $r->path === '/') {
-  $news = \News::getList(['limit' => 3/*, 'origin_user' => $vkUserId*/]);
-  $top = \News::getList(['limit' => 2/*, 'origin_user' => $vkUserId*/]);
+  $news = \News::getList(['limit' => 3, 'origin_user' => $user['id'], 'order' => ['create_time' => 'DESC']]);
+  $top = \News::getList(['limit' => 3, 'origin_user' => $user['id']]);
   header('Content-Type: text/html');
 
   $smarty
@@ -60,7 +61,7 @@ if ($r->path === '' || $r->path === '/') {
     ->assign('news', $news)
     ->display('vk-iframe.html.tpl');
   exit;
-} elseif ($r->path === '/addNews') {
+} elseif ($r->path === '/news/add') {
   header('Content-Type: application/json');
   $data = filter_input_array(INPUT_POST, [
 					  'text' => FILTER_DEFAULT,
@@ -94,10 +95,10 @@ if ($r->path === '' || $r->path === '/') {
 } elseif (preg_match('#^/news/(\d+)/delete/?$#', $r->path, $matches)) {
   header('Content-Type: application/json');
   $newsItem = \News::get($matches[1]);
-  if (!$newsItem || $newsItem['origin_user']['id'] !== $vkUserId) {
+  if (!$newsItem || !$user || $newsItem['user_id'] !== $user['id']) {
     echo json_encode(['errors' => ['Новость не найдена']]);
   } else {
-    \News::delete($newItem['id'], $vkUserId);
+    \News::delete($newItem['id'], $user['id']);
     echo json_encode(['messages' => ['Новость удалена']]);
   }
   exit;  
