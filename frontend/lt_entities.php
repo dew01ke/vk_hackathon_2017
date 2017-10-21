@@ -13,6 +13,11 @@ const 	PIPELINE_CREATE = 0,
 		PIPELINE_FEEDBACK = 8,
 		PIPELINE_FLAG = 9;
 
+const	NOTIFICATION_INBOX = 0,
+		NOTIFICATION_FEEDBACK = 1,
+		NOTIFICATION_ALERT = 2,
+		NOTIFICATION_MESSAGE = 3,
+		NOTIFICATION_PUBLISH = 4;
 
 // -----------------------------------------------------------------------
 
@@ -403,10 +408,12 @@ class News {
 			foreach($fields as $field) {
 				if (isset($data[$field])) $prepared[$field] = $data[$field]; 
 			}
-			$data['time'] = time();
-			$data['date'] = date("Y-m-d");
-			$data['user_id'] = $userId;
-			DB::insert("l_news_pipeline", $data);
+			$
+			$prepared['time'] = time();
+			$prepared['date'] = date("Y-m-d");
+			$prepared['user_id'] = $userId;
+			$prepared['stage_id'] = $news['stage_id'];
+			DB::insert("l_news_pipeline", $prepared);
 			$iid = DB::insertId();
 			if ($iid and $data['files']) {
 				foreach($data['files'] as $key=>$file) {
@@ -681,14 +688,40 @@ class Stages {
 
 class Notifications {
 
-	public static function get($userId, $id) {
+	public static function create($data, $userId) {
+		$userId = (int) $userId;
+		$proceed = true;
+		$prepared = [];
+		$fields = [	"type",
+					"news_id",
+					"user_from",
+					"text",
+					"data" ];
+		foreach($fields as $field) {
+			if (isset($data[$field])) $prepared[$field] = $data[$field]; 
+		}
+		$prepared['is_fresh'] = 1;
+		if ($data['from']) $data['user_from'] = $data['from'];
+		$prepared['user_to'] = $userId;
+		if ($proceed) {
+			$prepared['time'] = time();
+			$prepared['date'] = date("Y-m-d", time());
+			DB::insert("l_notifications", $prepared);
+			$iid = DB::insertId();
+			return $iid;
+		} else {
+			return 0;
+		}
+	}
+		
+	public static function get($id, $userId) {
 		$id = (int) $id;
 		$userId = (int) $userId;
 		$data = DB::getSingle("SELECT * FROM l_notifications WHERE id=$id AND user_to=$userId AND is_deleted=0");
 		return $data;
 	}
 
-	public static function getList($userId, $data) {
+	public static function getList($data, $userId) {
 		$userId = (int) $userId;
 		$where = "";
 		$order = "id DESC";
@@ -718,18 +751,32 @@ class Notifications {
 		return $notificationId;
 	}
 
-	public static function mark($userId, $id) {
+	public static function mark($id, $userId) {
 		$id = (int) $id;
 		$userId = (int) $userId;
 		DB::query("UPDATE l_notifications SET is_fresh=0 WHERE id=$id AND user_to=$userId");
 	}
 
-	public static function markTo($userId, $id) {
+	public static function markTo($id, $userId) {
 		$id = (int) $id;
 		$userId = (int) $userId;
 		DB::query("UPDATE l_notifications SET is_fresh=0 WHERE user_to=$userId AND is_fresh=1 AND id<=$id");
 	}
 	
+}
+
+
+// -----------------------------------------------------------------------
+
+
+class Stats {
+
+	public static function getAcceptedStats($data) {
+		$dateFrom = date("Y-m-d", strtotime("-30 day"));
+		$data = DB::query("SELECT date, COUNT(*) FROM l_news_pipeline WHERE date>=".DB::escape($dateFrom)." AND type=".PIPELINE_ADVANCE." GROUP BY date");
+		return $data;
+	}
+
 }
 
 

@@ -128,7 +128,8 @@ class DB {
 
 function initSmarty() {
 	global $smarty, $root;
-	$smarty = new \Smarty;
+	include($root."/smarty/Smarty.class.php");
+	$smarty = new Smarty();
 	$smarty->debugging=false;
 	$smarty->caching=false;
 	$smarty->cache_lifetime=0;

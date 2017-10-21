@@ -512,12 +512,23 @@ switch ($requestEntity) {
 		case "notifications": {
 		
 			switch ($requestMethod) {
+
+				case "create": {
+
+					$newNotificationId = Files::create($request, $userId);
+					if ($newNotificationId) {
+						$reply['id'] = $newNotificationId;
+						$success = true;
+					}
 				
+					break;
+				}
+			
 				case "get": {
 					
 					$id = (int) $request['id'];
 					if ($id) {
-						$data = Notifications::get($userId, $id);
+						$data = Notifications::get($id, $userId);
 						if ($data) {
 							$reply['item'] = $data;
 							$success = true;
@@ -529,7 +540,7 @@ switch ($requestEntity) {
 				
 				case "getList": {
 
-					$data = Notifications::getList($userId, $request);
+					$data = Notifications::getList($request, $userId);
 					if ($data) {
 						$reply['list'] = $data;
 						$success = true;
@@ -560,7 +571,7 @@ switch ($requestEntity) {
 					
 					$id = (int) $request['id'];
 					if ($id) {
-						$data = Notifications::mark($userId, $id);
+						$data = Notifications::mark($id, $userId);
 						$success = true;
 					}
 					
@@ -571,7 +582,7 @@ switch ($requestEntity) {
 					
 					$id = (int) $request['id'];
 					if ($id) {
-						$data = Notifications::markTo($userId, $id);
+						$data = Notifications::markTo($id, $userId);
 						$success = true;
 					}
 					
