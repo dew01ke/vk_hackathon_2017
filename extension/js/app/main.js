@@ -1,8 +1,21 @@
 (function() {
     console.log('[log]: content script init');
 
+    function sendBackgroundRequest(method, data, callback) {
+        var request = {};
+        if (method) request.method = method;
+        if (data) request.data = data;
+
+        chrome.extension.sendMessage(request,
+            function(response) {
+                if (callback) { callback(response); }
+            }
+        );
+    }
+
     var cache = {
-        header_nav: $('.nav-link[data-location]')
+        application: $('#application'),
+        auth_required: $('#auth-required')
     };
 
     var router = {
@@ -68,6 +81,16 @@
     };
 
     function onInit() {
+        sendBackgroundRequest('get_auth_state', null, function(data) {
+            if (data && data.user_id) {
+                cache.application.show();
+                cache.auth_required.hide();
+            } else {
+                cache.auth_required.show();
+                cache.application.hide();
+            }
+        });
+
         router.onInit();
     }
 

@@ -1,5 +1,13 @@
-body {
+html, body {
+    height: 100%;
+    font-weight: normal;
+}
+
+#application {
     padding-top: 3.5rem;
+}
+#auth-required {
+    height: 100%;
 }
 
 .navbar.bg-light {
