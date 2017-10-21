@@ -151,7 +151,8 @@
 
                 template += '<div class="article-active-corner"></div><div class="article-preview-time">';
                 template += time.format('DD.MM') + ' в ' + time.format('HH:mm');
-                template += '<span class="article-preview-sender">' + renderUserProfile(article, true, 'от: ') + '</span>';
+                if (article.source_url || true) template += '<span class="article-preview-sender"><a href="' + encodeURIComponent(article.source_url) + '" target="_blank">URL</a></span>';
+                template += '<span class="article-preview-sender">' + renderUserProfile(article, true, 'источник: ') + '</span>';
                 template += '</div>';
 
                 template += '<div class="article-preview-title">' + article.title + '</div>';
@@ -330,7 +331,7 @@
 	// Для приведения флексов основной части к полной высоте страницы (минус шапка)
 	function maintainLayout() {
 		var totalHeight = $(window).height();
-		var headerHeight = $(".navbar").height();
+		var headerHeight = 85
 		var rowContainer = $(".article-list-row");
 		var mainHeight = totalHeight - headerHeight;
 		rowContainer.height(mainHeight);
