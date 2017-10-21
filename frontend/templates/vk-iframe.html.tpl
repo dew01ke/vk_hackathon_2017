@@ -17,9 +17,9 @@
   </head>
   <body>
     <div class="container">
-    <form action="vk-iframe.php/news/add" method="POST" id="news-item-form" style="margin-bottom:20px;">
+    <form enctype="multipart/form-data" action="vk-iframe.php/news/add" method="POST" id="news-item-form" style="margin-bottom:20px;">
       <fieldset>
-	<div class="item form-group row" style="display:none;">
+	<div class="item form-group row" style="">
 	  <input class="form-control form-control-sm" type="text" name="title" placeholder="Заголовок новости"/>
 	</div>
 	<div class="item form-group row">

@@ -932,9 +932,8 @@ class Users {
 		}
 	}
 	
-	public static function delete($id, $userId) {
+	public static function delete($id) {
 		$id = (int) $id;
-		$userId = (int) $userId;
 		DB::query("UPDATE l_users SET is_deleted=1 WHERE id=$id");
 	}
 
