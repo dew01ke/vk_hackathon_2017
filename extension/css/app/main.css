@@ -3,6 +3,10 @@ html, body {
     font-weight: normal;
 }
 
+body {
+    overflow-y: scroll;
+}
+
 #application {
     padding-top: 3.5rem;
 }
@@ -62,4 +66,65 @@ html, body {
 }
 .views.views-active, .navs.navs-active, .sections.sections-active {
     display: block;
+}
+
+.article-preview {
+    cursor: pointer;
+}
+.article-preview.article-preview-active:after {
+    content: '';
+    width: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: -moz-linear-gradient(left, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 100%);
+    background: -webkit-linear-gradient(left, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(to right, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 100%);
+}
+.article-preview-time {
+    font-size: 13px; line-height: 15px; color: #949494;
+}
+.article-preview-title {
+    font-size: 14px; line-height: 16px; padding: 5px 0;
+}
+.article-preview-text {
+    font-size: 14px; line-height: 16px; color: #777777;
+}
+
+
+.article-full {
+
+}
+.article-full-title {
+    outline: none;
+}
+.article-full-time {
+    font-size: 14px;
+    line-height: 16px;
+    color: #949494;
+    padding: 5px 0;
+}
+.article-full-text {
+    padding: 0 0 5px 0;
+    font-size: 15px;
+    line-height: 17px;
+    color: #464646;
+    outline: none;
+}
+.article-full-controls {
+    padding: 5px 0 0 0;
+}
+.article-full-controls button {
+    margin-right: 5px;
+    cursor: pointer;
+}
+.article-full-controls button:last-child {
+    margin-right: 0;
+}
+.article-full-controls button.btn-right {
+    float: right;
+    margin: 0 2px;
+    min-width: 35px;
+    max-width: 35px;
 }
