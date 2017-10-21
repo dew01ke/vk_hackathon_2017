@@ -19,7 +19,10 @@
         header_navigation: $('.nav-link[data-location]')
     };
     var stagesCache = {};
-    var newsCache = {};
+    var newsCache = {
+        list_by_stages: {},
+        user_profile: null
+    };
 
     var router = {
         activeRoute: {
@@ -160,7 +163,7 @@
         return template;
     }
 
-    function getArticleFullTemplate(article) {
+    function getArticleFullTemplate(article, user) {
         var template = '';
 
         if (article) {
@@ -188,9 +191,21 @@
             template += '</div>';
             template += '</div>';
 
+            var buttonUpvoteClass = 'btn-outline-success',
+                buttonDownvoteClass = 'btn-outline-danger';
+            if (article.rating_list && user && user.id) {
+                var uid = parseInt(user.id);
+                if (article.rating_list.hasOwnProperty(uid)) {
+                    if (article.rating_list[uid] > 0) {
+                        buttonUpvoteClass = 'btn-success';
+                    } else {
+                        buttonDownvoteClass = 'btn-danger';
+                    }
+                }
+            }
 
-            template += '<button data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-outline-success btn-sm">+1</button>';
-            template += '<button data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-outline-danger btn-sm">-1</button>';
+            template += '<button data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonUpvoteClass + '">+1</button>';
+            template += '<button data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonDownvoteClass + '">-1</button>';
             template += '</div>'; //controls
 
         } else {
@@ -257,7 +272,8 @@
                             router.activeRoute.active_section = section;
                         }
 
-                        newsCache[stage.id] = news.news;
+                        newsCache.list_by_stages[stage.id] = news.news;
+                        newsCache.user_profile = news.user_profile;
                         stagesCount++;
                     }, 'getStageContent' + stage.id);
 
@@ -306,18 +322,22 @@
         return output;
     }
 
+    function renderUserData() {
+
+    }
+
     $(document).on('click', '.article-preview', function(e) {
         var that = $(this);
         var articleID = that.attr('data-article-id');
         var stageID = that.attr('data-stage-id');
 
         if (articleID && stageID) {
-            if (newsCache.hasOwnProperty(stageID)) {
-                var article = newsCache[stageID].filter(function(v) {
+            if (newsCache.list_by_stages.hasOwnProperty(stageID)) {
+                var article = newsCache.list_by_stages[stageID].filter(function(v) {
                     return (v.id === articleID);
                 }).pop();
                 if (article) {
-                    var html = getArticleFullTemplate(article);
+                    var html = getArticleFullTemplate(article, newsCache.user_profile);
                     var container = (router.activeRoute && router.activeRoute.active_section) ? router.activeRoute.active_section.find('.workflow') : null;
 
                     if (container) {
@@ -399,11 +419,20 @@
                 rating = -1;
             }
 
+            if (rateType === 'upvote' && that.hasClass('btn-success') ||
+                rateType === 'downvote' && that.hasClass('btn-danger')) {
+                rating = 0;
+            }
+
             api.on('news:rate', function(e, response) {
                 api.off('news:rate', 'articleRate');
 
                 if (response.success) {
-
+                    if (rateType === 'upvote') {
+                        that.toggleClass('btn-outline-success btn-success');
+                    } else {
+                        that.toggleClass('btn-outline-danger btn-danger');
+                    }
                 } else {
                     alert('При оценивании статьи возникла ошибка');
                 }

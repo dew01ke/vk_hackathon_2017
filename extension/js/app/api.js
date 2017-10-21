@@ -71,7 +71,7 @@ function Api() {
                 if ('error' in r && r.error)
                     _this.triggerEvent('error', {error:r.error}, target);
                 else
-                    _this.triggerEvent('news:get', {news:r.list}, target);
+                    _this.triggerEvent('news:get', { count_by_stage: r.count_by_stage, news: r.list, user_profile: r.user_profile }, target);
             });
         },
         setStage: function(params, target) {
