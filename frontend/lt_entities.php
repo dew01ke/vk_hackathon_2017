@@ -4,6 +4,10 @@ require_once("lt_core.php");
 require_once("lt_vk.php");
 require_once("morphy/common.php");
 
+$stopWords = [];
+$tmp = file($root."/var/stopwords.txt");
+foreach($tmp as $item) $stopWords[trim($item)] = 1;
+
 const 	PIPELINE_CREATE = 0,
 		PIPELINE_ADVANCE = 1,
 		PIPELINE_REVERT = 2,
@@ -188,11 +192,11 @@ class News {
 				$originUserId = Users::create($userData, $userId);
 				$prepared['origin_user'] = $originUserId;
 			} else {
-				if ($extUser['first_name'] and !$existingExtUser['first_name']) {
+				if ($extUser['first_name'] and $extUser['first_name'] != $existingExtUser['first_name']) {
 					DB::query("UPDATE l_users SET first_name=".DB::escape($extUser['first_name'])." WHERE id=$existingExtUser[id]");
 				}
-				if ($extUser['last_name'] and !$existingExtUser['last_name']) {
-					DB::query("UPDATE l_users SET last_name=".DB::escape($extUser['first_name'])." WHERE id=$existingExtUser[id]");
+				if ($extUser['last_name'] and $extUser['last_name'] != $existingExtUser['last_name']) {
+					DB::query("UPDATE l_users SET last_name=".DB::escape($extUser['last_name'])." WHERE id=$existingExtUser[id]");
 				}
 				$originUserId = $existingExtUser['id'];
 				$prepared['origin_user'] = $originUserId;
@@ -513,6 +517,47 @@ class News {
 		return $stageId;
 	}	
 
+	public static function update($id, $data, $userId) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		$news = self::get($id);
+		if ($news) {
+			$prepared = array();
+			$fields = [
+				"title",
+				"synopsis",
+				"text",
+				"source_url",
+				"publish_url",
+				"publish_time",
+				"priority",
+				"reward_amount",
+				"reward_status" ];
+			if ($data['publish_time']) {
+				$data['publish_time'] = (int) $data['publish_time'];
+				$data['publish_date'] = date("Y-m-d", $data['publish_time']);
+			}
+			foreach($fields as $field) {
+				if (isset($data[$field])) $prepared[$field] = $data[$field];
+			}
+			if (count($prepared)) {
+				$what = [];
+				foreach($prepared as $key=>$item) {
+					$what[] = "`".$key."`=".DB::escape($item);
+				}
+				$what = implode(",",$what);
+				DB::query("UPDATE l_news SET $what WHERE id=$id");
+				self::touch($id, $userId);
+			}
+			if ($data['stage_id']) {
+				$stageId = (int) $data['stage_id'];
+				if ($stageId != $news['stage_id']) {
+					self::setStage($id, $stageId, $userId);
+				}
+			}
+		}
+	}
+
 	public static function setStage($id, $stageId, $comment, $userId) {
 		$id = (int) $id;
 		$stageId = (int) $stageId;
@@ -527,9 +572,9 @@ class News {
 				$actionData = [ "type" => $type ];
 				if ($comment) $actionData['comment'] = $comment;
 				$newActionId = self::advancePipeline($id, $actionData, $userId);
+				self::touch($id, $userId);
 			}
 		}
-		self::touch($id, $userId);
 	}
 
 	public static function addComment($id, $comment, $userId) {
@@ -599,7 +644,7 @@ class News {
 	}
 	
 	public static function splitKeywords($id) {
-		global $morphyConfig;
+		global $morphyConfig, $stopWords;
 		$id = (int) $id;
 		$news = self::get($id);
 		if ($news) {
@@ -609,24 +654,27 @@ class News {
 			foreach($r[1] as $item) {
 				$word = mb_strtoupper($item);
 				$wordNormal = $morphy->lemmatize($word, phpMorphy::NORMAL);
-				if ($wordNormal) {
-					$wordBlocks['title'][$wordNormal[0]]++;
+				if ($wordNormal) $wordNormal = mb_strtolower($wordNormal[0]);
+				if ($wordNormal and !$stopWords[$wordNormal]) {
+					$wordBlocks['title'][$wordNormal]++;
 				}
 			}
 			preg_match_all("/\b([а-яё]+)\b/uUsi", mb_strtolower($news['synopsis']), $r);
 			foreach($r[1] as $item) {
 				$word = mb_strtoupper($item);
 				$wordNormal = $morphy->lemmatize($word, phpMorphy::NORMAL);
-				if ($wordNormal) {
-					$wordBlocks['synopsis'][$wordNormal[0]]++;
+				if ($wordNormal) $wordNormal = mb_strtolower($wordNormal[0]);
+				if ($wordNormal and !$stopWords[$wordNormal]) {
+					$wordBlocks['synopsis'][$wordNormal]++;
 				}
 			}
 			preg_match_all("/\b([а-яё]+)\b/uUsi", mb_strtolower($news['text']), $r);
 			foreach($r[1] as $item) {
 				$word = mb_strtoupper($item);
 				$wordNormal = $morphy->lemmatize($word, phpMorphy::NORMAL);
-				if ($wordNormal) {
-					$wordBlocks['text'][$wordNormal[0]]++;
+				if ($wordNormal) $wordNormal = mb_strtolower($wordNormal[0]);
+				if ($wordNormal and !$stopWords[$wordNormal]) {
+					$wordBlocks['text'][$wordNormal]++;
 				}
 			}
 			print_r($wordBlocks);
@@ -810,6 +858,32 @@ class Users {
 		}
 	}
 
+	public static function update($id, $data, $userId) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		$source = self::get($id);
+		if ($source) {
+			$prepared = array();
+			$fields = [
+				"first_name",
+				"last_name",
+				"mid_name",
+				"role_id",
+				"is_blacklisted" ];
+			foreach($fields as $field) {
+				if (isset($data[$field])) $prepared[$field] = $data[$field];
+			}
+			if (count($prepared)) {
+				$what = [];
+				foreach($prepared as $key=>$item) {
+					$what[] = "`".$key."`=".DB::escape($item);
+				}
+				$what = implode(",",$what);
+				DB::query("UPDATE l_users SET $what WHERE id=$id");
+			}
+		}
+	}
+	
 	public static function delete($id, $userId) {
 		$id = (int) $id;
 		$userId = (int) $userId;
@@ -1021,6 +1095,7 @@ class Sources {
 		$fields = [	"name",
 					"comment",
 					"url",
+					"domain",
 					"latency",
 					"trust_level" ];
 		foreach($fields as $field) {
@@ -1037,6 +1112,34 @@ class Sources {
 		}
 	}
 
+	public static function update($id, $data, $userId) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		$source = self::get($id);
+		if ($source) {
+			$prepared = array();
+			$fields = [
+				"name",
+				"comment",
+				"url",
+				"domain",
+				"latency",
+				"trust_level",
+				"is_blacklisted" ];
+			foreach($fields as $field) {
+				if (isset($data[$field])) $prepared[$field] = $data[$field];
+			}
+			if (count($prepared)) {
+				$what = [];
+				foreach($prepared as $key=>$item) {
+					$what[] = "`".$key."`=".DB::escape($item);
+				}
+				$what = implode(",",$what);
+				DB::query("UPDATE l_sources SET $what WHERE id=$id");
+			}
+		}
+	}
+	
 	public static function delete($id, $userId) {
 		$id = (int) $id;
 		$userId = (int) $userId;
