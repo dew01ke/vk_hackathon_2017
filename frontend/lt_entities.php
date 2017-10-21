@@ -273,8 +273,16 @@ class News {
 			} else {
 				DB::query("DELETE FROM l_news_rating WHERE news_id=$id AND user_id=$userId");
 			}
-			$rating = DB::getValue("SELECT SUM(rating) FROM l_news_rating WHERE news_id=$id");
-			DB::query("UPDATE l_news SET rating=$rating WHERE id=$id");
+			$ratingList = DB::query("SELECT rating, SUM(rating) AS s FROM l_news_rating WHERE news_id=$id GROUP BY rating");
+			$totalRating = 0;
+			$upRating = 0;
+			$downRating = 0;
+			foreach($ratingList as $item) {
+				$totalRating += $item['s'];
+				if ($item['rating'] < 0) $downRating += $item['s'];
+				if ($item['rating'] > 0) $upRating += $item['s'];
+			}
+			DB::query("UPDATE l_news SET rating=$totalRating, rating_up=$upRating, rating_down=$downRating WHERE id=$id");
 			self::touch($id, $userId);
 			return $rating;
 		} else {
@@ -393,7 +401,7 @@ class News {
 			$sortOrder = strtolower(array_pop($sort));
 			$sort = implode("_", $sort);
 			if ($sortOrder == "asc" or $sortOrder == "up") $sortOrder = "ASC";
-			if ($sortOrder == "desc" or $sortOrder == "down") $sortOrder = "DESC";
+			if ($sortOrder == "desc" or $sortOrder == "down" or !$sortOrder) $sortOrder = "DESC";
 			$allowedSort = [ "rating", "touch_time", "create_time", "publish_time" ];
 			if (in_array($sort, $allowedSort)) $order = $sort." ".$sortOrder;
 		}
@@ -1079,6 +1087,15 @@ class Notifications {
 
 
 class Stats {
+
+	public static function getNewsByStage() {
+		$data = DB::query("SELECT stage_id, COUNT(*) AS `c` FROM l_news WHERE is_deleted=0 GROUP BY stage_id");
+		$out = [];
+		foreach($data as $item) {
+			$out[$item['stage_id']] = $item['c'];
+		}
+		return $out;
+	}
 
 	public static function getAcceptedStats($data) {
 		$dateFrom = date("Y-m-d", strtotime("-30 day"));

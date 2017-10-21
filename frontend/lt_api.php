@@ -210,6 +210,7 @@ switch ($requestEntity) {
 					$data = News::getList($request);
 					if ($data) {
 						$reply['list'] = $data;
+						$reply['count_by_stage'] = Stats::getNewsByStage();
 						$success = true;
 					}
 				
@@ -486,6 +487,25 @@ switch ($requestEntity) {
 					$list = Stages::getAll();
 					if ($list) {
 						$reply['list'] = $list;
+						$success = true;
+					}
+					
+					break;
+				}
+				
+			}
+		
+		break;
+
+		case "stats":
+		
+			switch ($requestMethod) {
+				
+				case "countByStage": {
+
+					$list = Stats::getNewsByStage();
+					if ($list) {
+						$reply['count_by_stage'] = $list;
 						$success = true;
 					}
 					
