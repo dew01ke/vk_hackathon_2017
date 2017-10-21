@@ -378,6 +378,15 @@ class News {
 		$order = "touch_time ASC";
 		$onPage = 50;
 		$startFrom = 0;
+		if ($data['sort']) {
+			$sort = explode("_", $data['sort']);
+			$sortOrder = strtolower(array_pop($sort));
+			$sort = implode("_", $sort);
+			if ($sortOrder == "asc" or $sortOrder == "up") $sortOrder = "ASC";
+			if ($sortOrder == "desc" or $sortOrder == "down") $sortOrder = "DESC";
+			$allowedSort = [ "rating", "touch_time", "create_time", "publish_time" ];
+			if (in_array($sort, $allowedSort)) $order = $sort." ".$sortOrder;
+		}
 		if ($data['offset']) $startFrom = (int) $data['offset'];
 		if ($data['limit']) $onPage = (int) $data['limit'];
 		if ($data['ids'] and is_string($data['ids'])) {
