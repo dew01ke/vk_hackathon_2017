@@ -82,12 +82,15 @@
             }, false);
         }
     };
+    var api = new Api();
 
     function onInit() {
         sendBackgroundRequest('get_auth_state', null, function(data) {
             if (data && data.user_id) {
                 cache.view_application.show();
                 cache.view_auth_required.hide();
+
+                requestStages();
             } else {
                 cache.view_auth_required.show();
                 cache.view_application.hide();
@@ -100,6 +103,68 @@
             cache.header_navigation.removeClass('active');
             $(this).addClass('active');
         });
+    }
+
+    function getNewsListTemplate(news) {
+        var template = '';
+
+        if (news) {
+            for (let i in news) {
+                var article = news[i];
+                template += '<p>' + article.title + '</p>';
+            }
+        } else {
+            template = '<p>Здесь ничего нет</p>';
+        }
+
+        return template;
+    }
+
+    function requestStages() {
+        api.on('stages:get', function(e, stages) {
+            api.off('stages:get', 'getStages');
+
+            var html = '';
+            var stagesContainer = $('.navs[data-view="index"]'), isStageFirst = true,
+                viewContainer = $('.views[data-view="index"]'), isViewFirst = true;
+
+            if (stages && stages.stages) {
+                for (let i in stages.stages) {
+                    let stage = stages.stages[i];
+
+                    html += '<li class="nav-item">';
+                    if (isStageFirst) {
+                        isStageFirst = false;
+                        html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '">' + stage.name + '</a>';
+                    } else {
+                        html += '<a class="nav-link" href="#index/stage' + stage.id + stage.name + '">' + stage.name + '</a>';
+                    }
+                    html += '</li>';
+
+                    api.on('news:get', function(e, news) {
+                        api.off('news:get', 'getStageContent' + stage.id);
+
+                        var content = '';
+                        if (isViewFirst) {
+                            isViewFirst = false;
+                            content += '<div class="sections sections-active" data-section="stage' + stage.id + stage.name + '">';
+                        } else {
+                            content += '<div class="sections" data-section="stage' + stage.id + stage.name + '">';
+                        }
+
+                        content += getNewsListTemplate(news.news);
+                        content += '</div>';
+                        viewContainer.append(content);
+
+                    }, 'getStageContent' + stage.id);
+
+                    api.news.get({ stage_id: stage.id }, 'getStageContent' + stage.id);
+                }
+
+                stagesContainer.html(html);
+            }
+        }, 'getStages');
+        api.stages.get({ params: {} }, 'getStages');
     }
 
     onInit();
