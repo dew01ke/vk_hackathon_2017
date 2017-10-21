@@ -33,19 +33,19 @@ if (!$request) $request = [];
 if ($_FILES and !$request['files']) $request['files'] = $_FILES;
 
 $userId = 0;
+$userData = array();
 if ($request['token']) {
 	$extToken = $request['token'];
-	Users::auth($token);
+	$userData = Users::auth($token);
+	if ($userData) {
+		$userId = $userData['id'];
+	} else {
+		$reply['status'] = 201;
+		$reply['statusMessage'] = "Authentication failed.";
+	}
 }
-/*
-if ($_SESSION['vk']) {
-	$vkData = $_SESSION['vk'];
-	$extToken = $vkData['access_token'];
-	$extUserId = (int) $vkData['viewer_id'];
-	Users::auth($token);
-}
-*/
 
+if ($userData) {
 switch ($requestEntity) {
 
 		case "flags": {
@@ -689,6 +689,12 @@ switch ($requestEntity) {
 			break;
 		}
 		
+}
+} else {
+	if (!$reply['status']) {
+		$reply['status'] = 200;
+		$reply['statusMessage'] = "Not authenticated.";
+	}
 }
 
 if ($success) {

@@ -865,10 +865,21 @@ class Users {
 		VK::setToken($token);
 		$profile = VK::getUserProfile();
 		if ($profile) {
-			print_r($profile);
-			return true;
+			$originId = $profile['id'];
+			$firstName = $profile['first_name'];
+			$lastName = $profile['last_name'];
+			$existingUser = self::getByOrigin("vk", $originId);
+			if ($existingUser) {
+				return $existingUser;
+			} else {
+				$newUserId = self::create([ "origin_id" => $originId, "first_name" => $firstName, "last_name" => $lastName ]);
+				if ($newUserId) {
+					$newUser = self::get($newUserId);
+					return $newUser;
+				}
+			}
 		} else {
-			return false;
+			return null;
 		}
 	}
 	

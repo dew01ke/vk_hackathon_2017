@@ -38,11 +38,14 @@ class VK {
 		$res = curl_exec($curl);
 		curl_close($curl);
 		$res = json_decode($res, true);
+		if (!$res) $res = [];
+		if (isset($res['response'])) $res = $res['response'];
 		return $res;
 	}
 	
 	public static function getUserProfile($id) {
 		$res = self::request("users.get", [ "user_ids" => $id ]);
+		if (is_array($res)) $res = $res[0];
 		return $res;
 	}	
 	
