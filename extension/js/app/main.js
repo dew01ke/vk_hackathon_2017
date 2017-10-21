@@ -14,8 +14,8 @@
     }
 
     var cache = {
-        application: $('#application'),
-        auth_required: $('#auth-required'),
+        view_application: $('#application'),
+        view_auth_required: $('#auth-required'),
         header_navigation: $('.nav-link[data-location]')
     };
 
@@ -70,6 +70,8 @@
                                 if (targetSection.length) {
                                     sections.removeClass('sections-active');
                                     targetSection.addClass('sections-active');
+
+                                    targetNav.find('.nav-link').removeClass('active').filter('[href*="' + path.page + '/' +  path.section + '"]').addClass('active'); //omg wtf?
                                 }
                             }
                         }
@@ -84,11 +86,11 @@
     function onInit() {
         sendBackgroundRequest('get_auth_state', null, function(data) {
             if (data && data.user_id) {
-                cache.application.show();
-                cache.auth_required.hide();
+                cache.view_application.show();
+                cache.view_auth_required.hide();
             } else {
-                cache.auth_required.show();
-                cache.application.hide();
+                cache.view_auth_required.show();
+                cache.view_application.hide();
             }
         });
 
