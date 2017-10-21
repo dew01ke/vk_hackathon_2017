@@ -33,13 +33,18 @@ if (!$request) $request = [];
 if ($_FILES and !$request['files']) $request['files'] = $_FILES;
 
 $userId = 0;
-$extUserId = 0;
+if ($request['token']) {
+	$extToken = $request['token'];
+	Users::auth($token);
+}
+/*
 if ($_SESSION['vk']) {
 	$vkData = $_SESSION['vk'];
 	$extToken = $vkData['access_token'];
 	$extUserId = (int) $vkData['viewer_id'];
-	// Users::auth($token);
+	Users::auth($token);
 }
+*/
 
 switch ($requestEntity) {
 
@@ -696,6 +701,7 @@ if ($success) {
 	}
 }
 
+$reply['user_id'] = $userId;
 echo json_encode($reply);
 
 ?>
