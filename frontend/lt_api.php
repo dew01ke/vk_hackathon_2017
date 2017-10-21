@@ -2,7 +2,12 @@
 
 error_reporting(1);
 
+header("Content-Type: application/json");
+
 require_once("lt_entities.php");
+require_once("lt_vk.php");
+
+session_start();
 
 $path = $_GET['request_path'];
 if ($path[0] == "/") $path = substr($path, 1);
@@ -28,6 +33,13 @@ if (!$request) $request = [];
 if ($_FILES and !$request['files']) $request['files'] = $_FILES;
 
 $userId = 0;
+$extUserId = 0;
+if ($_SESSION['vk']) {
+	$vkData = $_SESSION['vk'];
+	$extToken = $vkData['access_token'];
+	$extUserId = $vkData['viewer_id'];
+	// Users::auth($token);
+}
 
 switch ($requestEntity) {
 
@@ -606,7 +618,6 @@ if ($success) {
 	}
 }
 
-header("Content-type: application/json");
 echo json_encode($reply);
 
 ?>

@@ -1,6 +1,7 @@
 <?php
 
 require_once("lt_core.php");
+require_once("lt_vk.php");
 
 const 	PIPELINE_CREATE = 0,
 		PIPELINE_ADVANCE = 1,
@@ -117,6 +118,7 @@ class News {
 					"source_url",
 					"origin_user",
 					"origin_data",
+					"is_anonymous",
 					"priority",
 					"trust_level",
 					"truth_level",
@@ -578,6 +580,15 @@ class Files {
 
 
 class Users {
+	
+	public static function auth($token) {
+		$result = VK::tryToken($token);
+		if ($result) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	
 	public static function create($data, $userId) {
 		$userId = (int) $userId;

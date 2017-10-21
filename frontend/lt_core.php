@@ -145,4 +145,20 @@ function writeLog($type, $name, $context, $data) {
 	DB::query("INSERT INTO l_log SET name=".DB::escape($name).", time=".time().", date=".DB::escape(date("Y-m-d")).", type=$type, context=".DB::escape($context).", data=".DB::escape($data));
 }
 
+function microtimeFloat() {
+	list($usec, $sec) = explode(" ", microtime());
+	return ((float)$usec + (float)$sec);
+}
+
+function toDMY($d) {
+	$t=strtotime($d);
+	return(date("d.m.Y",$t));
+}
+
+function toYMD($d) {
+	$tmp=explode(".",$d);
+	$d=$tmp[2]."-".str_pad($tmp[1],2,"0",STR_PAD_LEFT)."-".str_pad($tmp[0],2,"0",STR_PAD_LEFT);
+	return($d);
+}
+
 ?>
