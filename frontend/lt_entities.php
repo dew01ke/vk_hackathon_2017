@@ -2,6 +2,7 @@
 
 require_once("lt_core.php");
 require_once("lt_vk.php");
+require_once("morphy/common.php");
 
 const 	PIPELINE_CREATE = 0,
 		PIPELINE_ADVANCE = 1,
@@ -12,13 +13,23 @@ const 	PIPELINE_CREATE = 0,
 		PIPELINE_FILE = 6,
 		PIPELINE_ALERT = 7,
 		PIPELINE_FEEDBACK = 8,
-		PIPELINE_FLAG = 9;
+		PIPELINE_FLAG = 9,
+		PIPELINE_REWARD = 10;
 
 const	NOTIFICATION_INBOX = 0,
 		NOTIFICATION_FEEDBACK = 1,
 		NOTIFICATION_ALERT = 2,
 		NOTIFICATION_MESSAGE = 3,
 		NOTIFICATION_PUBLISH = 4;
+
+		
+// -----------------------------------------------------------------------
+
+
+$morphyConfig = [
+	"dir" => $root."/var",
+	"lang" => "ru_RU"
+];
 
 // -----------------------------------------------------------------------
 
@@ -378,11 +389,10 @@ class News {
 		return 3;
 	}	
 
-	public static function setStage($id, $stageId, $userId, $comment) {
+	public static function setStage($id, $stageId, $comment, $userId) {
 		$id = (int) $id;
 		$stageId = (int) $stageId;
 		$userId = (int) $userId;
-		$comment = DB::escape($comment);
 		$news = self::get($id);
 		if ($news) {
 			if ($stageId != $news['stage_id']) {
@@ -392,8 +402,21 @@ class News {
 				if ($stageId == 2) $type = PIPELINE_TRASH;
 				$actionData = [ "type" => $type ];
 				if ($comment) $actionData['comment'] = $comment;
-				$newActionId = self::advancePipeline($id, $actionData);
+				$newActionId = self::advancePipeline($id, $actionData, $userId);
 			}
+		}
+		self::touch($id, $userId);
+	}
+
+	public static function addComment($id, $comment, $userId) {
+		$id = (int) $id;
+		$userId = (int) $userId;
+		$news = self::get($id);
+		if ($news) {
+			$type = PIPELINE_COMMENT;
+			$actionData = [ "type" => $type ];
+			if ($comment) $actionData['comment'] = $comment;
+			$newActionId = self::advancePipeline($id, $actionData, $userId);
 		}
 		self::touch($id, $userId);
 	}
@@ -448,6 +471,41 @@ class News {
 			return $iid;
 		} else {
 			return 0;
+		}
+	}
+	
+	public static function splitKeywords($id) {
+		global $morphyConfig;
+		$id = (int) $id;
+		$news = self::get($id);
+		if ($news) {
+			$morphy = new phpMorphy($morphyConfig['dir'], $morphyConfig['lang'], []);
+			$wordBlocks = [ "title" => [], "synopsis" => [], "text" => [] ];
+			preg_match_all("/\b([а-яё]+)\b/uUsi", mb_strtolower($news['title']), $r);
+			foreach($r[1] as $item) {
+				$word = mb_strtoupper($item);
+				$wordNormal = $morphy->lemmatize($word, phpMorphy::NORMAL);
+				if ($wordNormal) {
+					$wordBlocks['title'][$wordNormal[0]]++;
+				}
+			}
+			preg_match_all("/\b([а-яё]+)\b/uUsi", mb_strtolower($news['synopsis']), $r);
+			foreach($r[1] as $item) {
+				$word = mb_strtoupper($item);
+				$wordNormal = $morphy->lemmatize($word, phpMorphy::NORMAL);
+				if ($wordNormal) {
+					$wordBlocks['synopsis'][$wordNormal[0]]++;
+				}
+			}
+			preg_match_all("/\b([а-яё]+)\b/uUsi", mb_strtolower($news['text']), $r);
+			foreach($r[1] as $item) {
+				$word = mb_strtoupper($item);
+				$wordNormal = $morphy->lemmatize($word, phpMorphy::NORMAL);
+				if ($wordNormal) {
+					$wordBlocks['text'][$wordNormal[0]]++;
+				}
+			}
+			print_r($wordBlocks);
 		}
 	}
 

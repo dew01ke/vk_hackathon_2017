@@ -37,7 +37,7 @@ $extUserId = 0;
 if ($_SESSION['vk']) {
 	$vkData = $_SESSION['vk'];
 	$extToken = $vkData['access_token'];
-	$extUserId = $vkData['viewer_id'];
+	$extUserId = (int) $vkData['viewer_id'];
 	// Users::auth($token);
 }
 
@@ -197,7 +197,19 @@ switch ($requestEntity) {
 					$id = (int) $request['id'];
 					$stageId = (int) $request['stage_id'];
 					if ($id) {
-						News::setStage($id, $stageId, $userId);
+						News::setStage($id, $stageId, null, $userId);
+						$success = true;
+					}
+				
+					break;
+				}
+				
+				case "addComment": {
+
+					$id = (int) $request['id'];
+					$comment = $request['comment'];
+					if ($id) {
+						News::addComment($id, $comment, $userId);
 						$success = true;
 					}
 				
