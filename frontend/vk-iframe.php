@@ -2,6 +2,8 @@
 
 require_once 'lt_core.php';
 require_once 'lt_entities.php';
+require_once 'UploadHandler.php';
+
 //ini_set('display_errors', 1);
 //error_reporting(-1);
 $secret = 'xG2kNupglLf88BF3toKq';
@@ -102,12 +104,9 @@ if ($r->path === '' || $r->path === '/') {
     echo json_encode(['messages' => ['Новость удалена']]);
   }
   exit;  
-} elseif ($r->path === '/uploadFile') {
-  header('Content-Type: application/json');
-  $data = filter_input_array(INPUT_POST, [
-					  
-					  ]);
-
+} elseif ($r->path === '/files/add') {
+  //header('Content-Type: application/json');
+  new \UploadHandler();
   exit;
 } else {
   http_response_code(404);

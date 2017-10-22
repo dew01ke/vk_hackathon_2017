@@ -12,5 +12,5 @@ function LentachButton($el) {
 		alert('Что-то пошло не так');
 	    });
 	});
-    } catch (){};
+    } catch (e){};
 }
