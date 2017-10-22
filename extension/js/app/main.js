@@ -230,8 +230,8 @@
                 }
             }
 
-            template += '<button data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonUpvoteClass + '">+1</button>';
-            template += '<button data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonDownvoteClass + '">-1</button>';
+            template += '<button data-stage-id="' + article.stage_id + '" data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonUpvoteClass + '">+1</button>';
+            template += '<button data-stage-id="' + article.stage_id + '" data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonDownvoteClass + '">-1</button>';
             template += '</div>'; //controls
 			
 			if (article.pipeline) {
@@ -276,6 +276,33 @@
         return template;
     }
 
+    function requestStage(stage, viewContainer) {
+        api.on('news:get', function(e, news) {
+            api.off('news:get', 'getStageContent' + stage.id);
+
+            var content = '';
+            content += '<div class="article-list">';
+            content += getNewsListTemplate(news.news, stage.id);
+            content += '</div>';
+
+            var section = $(content);
+            viewContainer.find('[data-section="stage' + stage.id + stage.name + '"]').find('.article-list').replaceWith(section);
+            router.activeRoute.active_section = viewContainer.find('[data-section="stage' + stage.id + stage.name + '"]');
+            maintainLayout();
+
+            if (news.count_by_stage) {
+                for (var key in news.count_by_stage) {
+                    $(".stage-counter[data-stage=" + key + "]").text(news.count_by_stage[key]);
+                }
+            }
+
+            newsCache.list_by_stages[stage.id] = news.news;
+            newsCache.user_profile = news.user_profile;
+        }, 'getStageContent' + stage.id);
+
+        api.news.get({ stage_id: stage.id }, 'getStageContent' + stage.id);
+    }
+
     function requestStages() {
         api.on('stages:get', function(e, stages) {
             api.off('stages:get', 'getStages');
@@ -304,9 +331,9 @@
                     html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
                     if (isStageFirst && stagesCount === 0 || relatedPath === currentPath) {
                         isStageFirst = false;
-                        html += '<a class="nav-link active" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
+                        html += '<a data-stage-id="' + stage.id + '" class="change-stage nav-link active" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     } else {
-                        html += '<a class="nav-link" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
+                        html += '<a data-stage-id="' + stage.id + '" class="change-stage nav-link" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     }
                     html += '</li>';
 
@@ -494,7 +521,6 @@
 
     $(document).on('click', '.article-change-stage', function(e) {
         e.stopPropagation();
-        e.preventDefault();
 
         var that = $(this);
         var articleID = that.attr('data-article-id');
@@ -505,6 +531,14 @@
                 api.off('news:setStage', 'setStage');
 
                 if (response.success) {
+                    var stage = stagesCache.filter(function(v) {
+                        return (v.id === stageID);
+                    }).pop();
+
+                    if (stage && router.activeRoute && router.activeRoute.active_view) {
+                        requestStage(stage, router.activeRoute.active_view);
+                    }
+
                     alert('Успешно сменили стадию');
                 } else {
                     alert('При смене стадии возникла ошибка');
@@ -565,8 +599,21 @@
                 if (response.success) {
                     if (rateType === 'upvote') {
                         that.toggleClass('btn-outline-success btn-success');
+                        that.parent().find('.btn-danger').toggleClass('btn-outline-danger btn-danger');
                     } else {
                         that.toggleClass('btn-outline-danger btn-danger');
+                        that.parent().find('.btn-success').toggleClass('btn-outline-success btn-success');
+                    }
+
+                    var stageID = that.attr('data-stage-id');
+                    if (stageID) {
+                        var stage = stagesCache.filter(function(v) {
+                            return (v.id === stageID);
+                        }).pop();
+
+                        if (stage && router.activeRoute && router.activeRoute.active_view) {
+                            requestStage(stage, router.activeRoute.active_view);
+                        }
                     }
                 } else {
                     alert('При оценивании статьи возникла ошибка');
@@ -600,6 +647,23 @@
             }, 'articleUpdate');
 
             api.news.update({ id: articleID, title: articleTitle, synopsis: articleSynopsis }, 'articleUpdate');
+        }
+    });
+
+    $(document).on('click', '.change-stage', function(e) {
+        e.stopPropagation();
+
+        var that = $(this);
+        var stageID = that.attr('data-stage-id');
+
+        if (stageID) {
+            var stage = stagesCache.filter(function(v) {
+                return (v.id === stageID);
+            }).pop();
+
+            if (stage && router.activeRoute && router.activeRoute.active_view) {
+                requestStage(stage, router.activeRoute.active_view);
+            }
         }
     });
 
