@@ -25,18 +25,19 @@
 	<div class="item form-group row" style="">
 	  <input class="form-control form-control-sm" type="text" name="title" placeholder="Заголовок новости"/>
 	</div>
-	<div class="item form-group row">
+	<div class="item form-group row" id="forFiles">
 	  <textarea rows="5" cols="60" class="form-control form-control-sm" name="text" placeholder="Текст новости"></textarea>
 	</div>
 	<div class="form-group row">
 	  <div class="item form-group row" style="width:40%;float:left">
 	    <input class="form-control form-control-sm" type="url" name="url" placeholder="Ссылка на новость" style="display:none;width:50%"/>
-	    <input type="button" value="Прикрепить файлы" class="btn btn-primary btn-sm" onclick="this.form.elements.image.click();"/> <input class="form-control form-control-sm" type="file" multiple="multiple" name="image" placeholder="Изображение к новости" id="fileupload" style="display:none;"/>
+	    <input type="button" value="Прикрепить файлы" class="btn btn-primary btn-sm" onclick="this.form.elements.files.click();"/> <input class="form-control form-control-sm" type="file" multiple="multiple" name="files" placeholder="Изображение к новости" id="fileupload" style="display:none;"/>
 	  </div>
 	  <div class="control form-group row" style="width:60%;float:left;text-align:right;">
 	    <!--label class="form-check-label">анонимно <input class="form-check-input" type="checkbox" name="anonymous" style="vertical-align: middle;"/></label--> &nbsp;&nbsp;&nbsp;
 	    <input type="submit" value="Отправить" class="btn btn-primary btn-sm"/>
 	  </div>
+	  <div id="uploaded-files" style="font-size:80%"></div>
 	</div>
       </fieldset>
     </form>
@@ -53,13 +54,17 @@
       });
       });
 
+      var uiui = 0;
       $(function () {
       $('#fileupload').fileupload({
       url:'/vk-iframe.php/files/add',
       dataType: 'json',
       done: function (e, data) {
       $.each(data.result.files, function (index, file) {
-      $('<p/>').text(file.name).appendTo(document.body);
+      $('<p/>').text(file.name).appendTo($('#uploaded-files'));
+      $('#forFiles').append('<input type="hidden" name="images[' + uiui + '][url]" value="' + file.url + '"/>')
+      $('#forFiles').append('<input type="hidden" name="images[' + uiui + '][path]" value="' + file.url + '"/>')
+      uiui++;
       });
       }
       });
