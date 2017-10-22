@@ -172,7 +172,7 @@
                 template += '</div>';
 
                 template += '<div class="article-preview-title">' + article.title + '</div>';
-                template += '<div class="article-preview-text">' + article.synopsis + '</div>';
+                template += '<div class="article-preview-text">' + ((article.synopsis.length > 120 && _.isString(article.synopsis)) ? article.synopsis.substring(0, 119) + '...' : article.synopsis) + '</div>';
 
 				template += '<div class="article-preview-controls">';
                 template += '<button data-article-id="' + article.id + '" type="button" class="article-preview-remove-button btn btn-right btn-outline-secondary btn-sm"><span class="oi oi-trash"></span></button>';
