@@ -79,13 +79,14 @@ a:hover { color:#a0a0a0; }
 .nav-trash .nav-link.active { border-top:1px solid rgba(0,0,0,0);margin-right:0px;background-image:url('/assets/trash_black.png'); }
 .nav-trash .stage-counter { display:none; }
 
-.stage-counter { display:inline-block;border-right:2px solid rgba(255,255,255,0.25);width:25px;margin-right:15px;font-weight:700; }
+.stage-counter { display:inline-block;border-right:2px solid rgba(255,255,255,0.25);width:30px;margin-right:15px;font-weight:700; }
 .nav-link.active .stage-counter { border-right:2px solid rgba(0,0,0,0.25); }
 
 .sidebar .nav-link {
     border-radius: 0;
 	margin-left:15px;
 	padding:12px 15px;
+	font-size:18px !important;
 }
 
 .nav-item a { text-decoration:none !important; }
@@ -263,8 +264,12 @@ a:hover { color:#a0a0a0; }
 .content-empty { padding:30px;padding-left:30px; }
 
 .header-profile { float:right;margin-top:35px;margin-right:40px; }
+.header-profile img { opacity:0.3; }
 
 .edit-small { display:inline-block;margin-left:6px;width:14px;height:14px;background-repeat:no-repeat;background-position:50% 50%;background-size:100% 100%;background-image:url('/assets/edit_purple.png'); }
 
 .role2, .role3, .role4, .role5, .role6, .role7, .role8 { color:#793460; }
+
+.left-search { margin-left:35px;margin-bottom:20px; }
+.search-input { background:transparent;font-size:18px;color:rgba(255,255,255,0.5);border:0px;border-bottom:1px solid rgba(255,255,255,0.5);width:65%;margin-left:5px;outline:0 !important; }
 

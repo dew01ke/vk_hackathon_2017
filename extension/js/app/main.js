@@ -414,6 +414,21 @@
 		var workFlow = $(".workflow");
 		// workFlow.height(mainHeight - 50);
 	}
+	
+	function newSearch(s) {
+		// Сделать так, чтобы все News::getList шли с search = s
+	}
+
+	$(".left-search").on('click', function(e) {
+		$(".search-input").val("");
+	});
+	
+	$("#searchForm").on('submit', function(e) {
+		newSearch($(".search-input").val());
+		e.stopPropagation();
+		e.preventDefault();
+		return false;
+	});
 
     $(document).on('click', '.article-preview', function(e) {
         var that = $(this);
