@@ -132,6 +132,22 @@
 
         router.onInit();
 
+        var hash = router.getCurrentPath();
+        var path = router.getPathStages(hash);
+        var page = (path.page && path.section) ? path.page : 'index';
+        $('.views').removeClass('views-active').filter('[data-view="' + page + '"]').addClass('views-active');
+        $('.navs').removeClass('navs-active').filter('[data-view="' + page + '"]').addClass('navs-active');
+
+        // var mainInterval = setInterval(function() {
+        //     api.on('notifications:getList', function(e, response) {
+        //         api.off('news:get', 'getNotificationsList');
+        //
+        //         console.log(response);
+        //     }, 'getNotificationsList');
+        //
+        //     api.notifications.getList({ mark: 1, limit: 5, fresh_only: 1 }, 'getNotificationsList');
+        // }, 5000);
+
         cache.header_navigation.click(function() {
             cache.header_navigation.removeClass('active');
             $(this).addClass('active');
@@ -265,8 +281,11 @@
             api.off('stages:get', 'getStages');
 
             var html = '';
-            var stagesContainer = $('.navs[data-view="index"]'), isStageFirst = true,
-                viewContainer = $('.views[data-view="index"]'), isViewFirst = true;
+            var stagesContainer = $('.navs[data-view="index"]'), isStageFirst = !!router.activeRoute.path,
+                viewContainer = $('.views[data-view="index"]'), isViewFirst = !!router.activeRoute.path;
+            var hash = router.getCurrentPath();
+            var path = router.getPathStages(hash);
+            var currentPath = path.section;
 
             router.activeRoute.active_nav = stagesContainer.find('.nav-link.active');
             router.activeRoute.active_view = viewContainer;
@@ -274,18 +293,20 @@
             if (stages && stages.stages) {
                 var collection =  _.sortBy(stages.stages, [function(o) { return parseInt(o.oid); }]);
                 let stagesCount = 0;
+                let stagePath = 'stage' + collection[0].id + collection[0].name;
 
                 stagesCache = collection;
 
                 for (let i in collection) {
                     let stage = collection[i];
+                    let relatedPath = 'stage' + stage.id + stage.name;
 
                     html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
-                    if (isStageFirst && stagesCount === 0) {
+                    if (isStageFirst && stagesCount === 0 || relatedPath === currentPath) {
                         isStageFirst = false;
                         html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     } else {
-                        html += '<a class="nav-link" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
+                        html += '<a class="nav-link" data-section="stage' + + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     }
                     html += '</li>';
 
@@ -293,7 +314,7 @@
                         api.off('news:get', 'getStageContent' + stage.id);
 
                         var content = '';
-                        if (isViewFirst && stagesCount === 0) {
+                        if (isViewFirst && stagesCount === 0 || relatedPath === currentPath) {
                             isViewFirst = false;
                             content += '<div class="sections sections-active" data-section="stage' + stage.id + stage.name + '">';
                         } else {
@@ -313,7 +334,7 @@
                         viewContainer.append(section);
 
                         //TODO: не очень оправданно так делать
-                        if (!isViewFirst && stagesCount === 0) {
+                        if (!isViewFirst && stagesCount === 0 || relatedPath === currentPath) {
                             router.activeRoute.active_section = section;
                         }
 						
@@ -325,9 +346,13 @@
 
                         newsCache.list_by_stages[stage.id] = news.news;
                         newsCache.user_profile = news.user_profile;
+
 						var profileHTML = "<img src='/assets/profile.png' width='32'>&nbsp;&nbsp;&nbsp; <b>" + news.user_profile.first_name + " " + news.user_profile.last_name + "</b>";
 						$(".header-profile").html(profileHTML);
-						
+
+						if (stagesCount === collection.length - 1) {
+						    viewContainer.find('.sections').removeClass('sections-active').filter('[data-section^="' + stagePath + '"]').addClass('sections-active');
+                        }
                         stagesCount++;
                     }, 'getStageContent' + stage.id);
 
@@ -335,6 +360,7 @@
                 }
 
                 stagesContainer.html(html);
+                stagesContainer.find('.nav-link').removeClass('active').filter('[data-section~="' + stagePath + '"]').addClass('active');
             }
         }, 'getStages');
         api.stages.get({ params: {} }, 'getStages');
@@ -388,14 +414,6 @@
 		var workFlow = $(".workflow");
 		// workFlow.height(mainHeight - 50);
 	}
-
-    function renderUserData() {
-
-    }
-
-    function renderArticlePipeline() {
-
-    }
 
     $(document).on('click', '.article-preview', function(e) {
         var that = $(this);
