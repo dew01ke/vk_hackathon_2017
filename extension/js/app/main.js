@@ -257,7 +257,7 @@
             if (stages && stages.stages) {
                 var collection =  _.sortBy(stages.stages, [function(o) { return parseInt(o.oid); }]);
                 let stagesCount = 0;
-                let stagePath = 'stage' + collection[0].id + collection[0].name;
+                let stagePath = (currentPath) ? currentPath : 'stage' + collection[0].id + collection[0].name ;
 
                 stagesCache = collection;
 
@@ -268,9 +268,9 @@
                     html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
                     if (isStageFirst && stagesCount === 0 || relatedPath === currentPath) {
                         isStageFirst = false;
-                        html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
+                        html += '<a class="nav-link active" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     } else {
-                        html += '<a class="nav-link" data-section="stage' + + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
+                        html += '<a class="nav-link" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     }
                     html += '</li>';
 
@@ -314,7 +314,7 @@
 						var profileHTML = "<img src='/assets/profile.png' width='32'>&nbsp;&nbsp;&nbsp; <b>" + news.user_profile.first_name + " " + news.user_profile.last_name + "</b>";
 						$(".header-profile").html(profileHTML);
 
-						if (stagesCount === collection.length - 1) {
+						if (stagesCount === collection.length - 1 && !router.activeRoute.path) {
 						    viewContainer.find('.sections').removeClass('sections-active').filter('[data-section^="' + stagePath + '"]').addClass('sections-active');
                         }
                         stagesCount++;
@@ -324,7 +324,12 @@
                 }
 
                 stagesContainer.html(html);
-                stagesContainer.find('.nav-link').removeClass('active').filter('[data-section~="' + stagePath + '"]').addClass('active');
+
+                console.log('router.activeRoute.path', router.activeRoute.path);
+
+                if (!router.activeRoute.path) {
+                    stagesContainer.find('.nav-link').removeClass('active').filter('[data-section="' + stagePath + '"]').addClass('active');
+                }
             }
         }, 'getStages');
         api.stages.get({ params: {} }, 'getStages');
