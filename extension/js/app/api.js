@@ -14,6 +14,7 @@ function Api() {
         'news:setStage':{e:[]},
         'news:delete':{e:[]},
         'news:rate':{e:[]},
+        'news:addComment':{e:[]},
         'stages:getOne':{e:[]},
         'stages:get':{e:[]},
         'flags:getOne':{e:[]},
@@ -115,6 +116,16 @@ function Api() {
                     _this.triggerEvent('error', {error:r.error}, target);
                 else
                     _this.triggerEvent('news:update', { success: (r.status === 100 && r.statusMessage === 'OK') }, target);
+            });
+        },
+        addComment: function(params, target) {
+            params.origin_id =_this.user_id;
+            params.token = _this.user_token;
+            $.post(base + 'api/news/addComment', params).done(function(r) {
+                if ('error' in r && r.error)
+                    _this.triggerEvent('error', {error:r.error}, target);
+                else
+                    _this.triggerEvent('news:addComment', { success: (r.status === 100 && r.statusMessage === 'OK') }, target);
             });
         }
 //	add: function({params}, target) {

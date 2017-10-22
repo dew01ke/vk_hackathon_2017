@@ -217,6 +217,15 @@
 
             template += '<button data-article-id="' + article.id + '" type="button" class="article-comment-button btn btn-comment btn-sm">&nbsp;</button>';
 
+            template += '<div class="article-comment-form" style="display: none;">';
+            template += '<textarea style="width: 100%; min-height: 50px; padding: 5px;" placeholder="Комментарий"></textarea>';
+
+            template += '<div class="article-full-controls">';
+            template += '<button data-article-id="' + article.id + '" type="button" class="article-full-comment-save-button btn btn-success btn-sm">Отправить комментарий</button>';
+            template += '</div>';
+
+            template += '</div>';
+
             var buttonUpvoteClass = 'btn-outline-success',
                 buttonDownvoteClass = 'btn-outline-danger';
             if (article.rating_list && user && user.id) {
@@ -665,6 +674,61 @@
                 requestStage(stage, router.activeRoute.active_view);
             }
         }
+    });
+
+    $(document).on('click', '.article-full-comment-save-button', function(e) {
+        e.stopPropagation();
+
+        var that = $(this);
+        var parent = that.closest('.article-comment-form');
+        var articleID = that.attr('data-article-id');
+        var text = parent.find('textarea').val();
+        var comment = $.trim(text);
+
+        if (comment === '') {
+            alert('Похоже, что вы забыли ввести комментарий');
+            return false;
+        }
+
+        if (articleID) {
+            api.on('news:addComment', function(e, response) {
+                api.off('news:addComment', 'articleComment');
+
+                if (response.success) {
+                    parent.find('.article-comment-form').slideToggle();
+                }
+            }, 'articleComment');
+
+            api.news.addComment({ id: articleID, comment: comment }, 'articleComment');
+        }
+    });
+
+    $(document).on('click', '.article-comment-button', function(e) {
+        e.stopPropagation();
+
+        var that = $(this);
+        var parent = that.closest('.workflow');
+        var form = parent.find('.article-comment-form');
+
+        form.slideToggle();
+
+        // var articleID = that.attr('data-article-id');
+        // var comment = $.trim('123');
+        //
+        // if (comment === '') {
+        //     alert('Похоже, что вы забыли ввести комментарий');
+        //     return false;
+        // }
+        //
+        // if (articleID) {
+        //     api.on('news:addComment', function(e, response) {
+        //         api.off('news:addComment', 'articleComment');
+        //
+        //         console.log(response);
+        //     }, 'articleComment');
+        //
+        //     api.news.addComment({ id: articleID, comment: comment }, 'articleComment');
+        // }
     });
 
     onInit();
