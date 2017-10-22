@@ -132,6 +132,12 @@
 
         router.onInit();
 
+        var hash = router.getCurrentPath();
+        var path = router.getPathStages(hash);
+        var page = (path.page && path.section) ? path.page : 'index';
+        $('.views').removeClass('views-active').filter('[data-view="' + page + '"]').addClass('views-active');
+        $('.navs').removeClass('navs-active').filter('[data-view="' + page + '"]').addClass('navs-active');
+
         cache.header_navigation.click(function() {
             cache.header_navigation.removeClass('active');
             $(this).addClass('active');
@@ -229,8 +235,11 @@
             api.off('stages:get', 'getStages');
 
             var html = '';
-            var stagesContainer = $('.navs[data-view="index"]'), isStageFirst = true,
-                viewContainer = $('.views[data-view="index"]'), isViewFirst = true;
+            var stagesContainer = $('.navs[data-view="index"]'), isStageFirst = !!router.activeRoute.path,
+                viewContainer = $('.views[data-view="index"]'), isViewFirst = !!router.activeRoute.path;
+            var hash = router.getCurrentPath();
+            var path = router.getPathStages(hash);
+            var currentPath = path.section;
 
             router.activeRoute.active_nav = stagesContainer.find('.nav-link.active');
             router.activeRoute.active_view = viewContainer;
@@ -243,9 +252,10 @@
 
                 for (let i in collection) {
                     let stage = collection[i];
+                    let relatedPath = 'stage' + stage.id + stage.name;
 
                     html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
-                    if (isStageFirst && stagesCount === 0) {
+                    if (isStageFirst && stagesCount === 0 || relatedPath === currentPath) {
                         isStageFirst = false;
                         html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     } else {
@@ -257,7 +267,7 @@
                         api.off('news:get', 'getStageContent' + stage.id);
 
                         var content = '';
-                        if (isViewFirst && stagesCount === 0) {
+                        if (isViewFirst && stagesCount === 0 || relatedPath === currentPath) {
                             isViewFirst = false;
                             content += '<div class="sections sections-active" data-section="stage' + stage.id + stage.name + '">';
                         } else {
