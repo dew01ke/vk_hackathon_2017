@@ -202,8 +202,15 @@ notifications/get
 notifications/getList
 	offset (int)
 	limit (int)
+	news_id (int)
+	fresh_only (0/1)
+	mark (0/1)
 notifications/getFreshCount
 notifications/getLastId
+notifications/mark
+	id (int)
+notifications/markTo
+	id (int)
 
 /* ---------------------------------------------------------------------------- */
 

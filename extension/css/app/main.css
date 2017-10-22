@@ -253,10 +253,18 @@ a:hover { color:#a0a0a0; }
 .article-full-rate-button { border-radius:0px;background:#e5e5e5;padding:8px 10px;border:0px !important; }
 .article-full-rate-button.btn-danger { background:#dc3545 !important; }
 .article-full-rate-button.btn-success { background:#28a745 !important; }
+.article-comment-button { background-color:#999 !important;background-repeat:no-repeat;background-position:50% 50%;background-size:26px auto;padding:8px 20px;background-image:url('/assets/comment.png');border-radius:0px;font-size:16px;border:0px !important; }
+
+.pipeline-item { background:#e5e5e5;padding:20px; }
+.pipeline-comment { }
+.pipeline-files-header { font-weight:500; }
+.pipeline-file { }
 
 .content-empty { padding:30px;padding-left:30px; }
 
 .header-profile { float:right;margin-top:35px;margin-right:40px; }
 
 .edit-small { display:inline-block;margin-left:6px;width:14px;height:14px;background-repeat:no-repeat;background-position:50% 50%;background-size:100% 100%;background-image:url('/assets/edit_purple.png'); }
+
+.role2, .role3, .role4, .role5, .role6, .role7, .role8 { color:#793460; }
 
