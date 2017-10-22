@@ -138,6 +138,16 @@
         $('.views').removeClass('views-active').filter('[data-view="' + page + '"]').addClass('views-active');
         $('.navs').removeClass('navs-active').filter('[data-view="' + page + '"]').addClass('navs-active');
 
+        // var mainInterval = setInterval(function() {
+        //     api.on('notifications:getList', function(e, response) {
+        //         api.off('news:get', 'getNotificationsList');
+        //
+        //         console.log(response);
+        //     }, 'getNotificationsList');
+        //
+        //     api.notifications.getList({ mark: 1, limit: 5, fresh_only: 1 }, 'getNotificationsList');
+        // }, 5000);
+
         cache.header_navigation.click(function() {
             cache.header_navigation.removeClass('active');
             $(this).addClass('active');
@@ -162,7 +172,7 @@
                 template += '</div>';
 
                 template += '<div class="article-preview-title">' + article.title + '</div>';
-                template += '<div class="article-preview-text">' + article.synopsis + '</div>';
+                template += '<div class="article-preview-text">' + ((article.synopsis.length > 120 && _.isString(article.synopsis)) ? article.synopsis.substring(0, 119) + '...' : article.synopsis) + '</div>';
 
 				template += '<div class="article-preview-controls">';
                 template += '<button data-article-id="' + article.id + '" type="button" class="article-preview-remove-button btn btn-right btn-outline-secondary btn-sm"><span class="oi oi-trash"></span></button>';
@@ -198,13 +208,14 @@
             template += '<div class="article-full-controls">';
             template += '<button data-article-id="' + article.id + '" type="button" class="article-full-save-button btn btn-success btn-sm">Сохранить</button>';
 
-
             template += '<div class="btn-group">';
             template += '<button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Переместить</button>';
             template += '<div class="dropdown-menu">';
             template += renderStagesToDropdown(stagesCache, article.id);
             template += '</div>';
             template += '</div>';
+
+            template += '<button data-article-id="' + article.id + '" type="button" class="article-comment-button btn btn-comment btn-sm">&nbsp;</button>';
 
             var buttonUpvoteClass = 'btn-outline-success',
                 buttonDownvoteClass = 'btn-outline-danger';
@@ -222,6 +233,41 @@
             template += '<button data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonUpvoteClass + '">+1</button>';
             template += '<button data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonDownvoteClass + '">-1</button>';
             template += '</div>'; //controls
+			
+			if (article.pipeline) {
+				for (var key in article.pipeline) {
+					var action = article.pipeline[key];
+					var pipelineHTML = "";
+					var blockText = "";
+					pipelineHTML += '<div class="pipeline-item">';
+					pipelineHTML += '<div class="article-preview-time">';
+					var time = moment(action.time * 1000);
+					pipelineHTML += time.format('DD.MM') + ' в ' + time.format('HH:mm');
+					if (action.user) {
+						pipelineHTML += '<span class="article-preview-sender role' + action.user.role_id + '">' + action.user.first_name + ' ' + action.user.last_name + '</span>';
+					}
+					pipelineHTML += '</div>';
+					if (action.type == 0) {
+						blockText = '<b>Заявка на публикацию новости.</b>';
+					} else if (action.type == 1) {
+						blockText = 'Перенос новости в другую папку.</b>';
+					} else {
+						if (action.comment && action.comment != "") {
+							blockText += '<div class="pipeline-comment">' + action.comment + '</div>';
+						}
+						if (action.files) {
+							blockText += '<div class="pipeline-files-header">Прикрепленные файлы:</div>';
+							for (var fileKey in action.files) {
+								var file = action.files[fileKey];
+								blockText += '<div class="pipeline-file">' + $('<div/>').text((file.name && file.name != '') ? file.name : file.origin_name).html() + '</div>';
+							}
+						}
+					}
+					pipelineHTML += blockText;
+					pipelineHTML += '</div>';
+				}
+				template += pipelineHTML;
+			}
 
         } else {
             template += '<p>Что-то пошло не так :(</p>';
@@ -247,6 +293,7 @@
             if (stages && stages.stages) {
                 var collection =  _.sortBy(stages.stages, [function(o) { return parseInt(o.oid); }]);
                 let stagesCount = 0;
+                let stagePath = (currentPath) ? currentPath : 'stage' + collection[0].id + collection[0].name ;
 
                 stagesCache = collection;
 
@@ -257,9 +304,9 @@
                     html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
                     if (isStageFirst && stagesCount === 0 || relatedPath === currentPath) {
                         isStageFirst = false;
-                        html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
+                        html += '<a class="nav-link active" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     } else {
-                        html += '<a class="nav-link" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
+                        html += '<a class="nav-link" data-section="stage' + stage.id + stage.name + '" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     }
                     html += '</li>';
 
@@ -287,7 +334,7 @@
                         viewContainer.append(section);
 
                         //TODO: не очень оправданно так делать
-                        if (!isViewFirst && stagesCount === 0) {
+                        if (!isViewFirst && stagesCount === 0 || relatedPath === currentPath) {
                             router.activeRoute.active_section = section;
                         }
 						
@@ -299,9 +346,13 @@
 
                         newsCache.list_by_stages[stage.id] = news.news;
                         newsCache.user_profile = news.user_profile;
+
 						var profileHTML = "<img src='/assets/profile.png' width='32'>&nbsp;&nbsp;&nbsp; <b>" + news.user_profile.first_name + " " + news.user_profile.last_name + "</b>";
 						$(".header-profile").html(profileHTML);
-						
+
+						if (stagesCount === collection.length - 1 && !router.activeRoute.path) {
+						    viewContainer.find('.sections').removeClass('sections-active').filter('[data-section^="' + stagePath + '"]').addClass('sections-active');
+                        }
                         stagesCount++;
                     }, 'getStageContent' + stage.id);
 
@@ -309,6 +360,12 @@
                 }
 
                 stagesContainer.html(html);
+
+                console.log('router.activeRoute.path', router.activeRoute.path);
+
+                if (!router.activeRoute.path) {
+                    stagesContainer.find('.nav-link').removeClass('active').filter('[data-section="' + stagePath + '"]').addClass('active');
+                }
             }
         }, 'getStages');
         api.stages.get({ params: {} }, 'getStages');
@@ -362,14 +419,21 @@
 		var workFlow = $(".workflow");
 		// workFlow.height(mainHeight - 50);
 	}
+	
+	function newSearch(s) {
+		// Сделать так, чтобы все News::getList шли с search = s
+	}
 
-    function renderUserData() {
-
-    }
-
-    function renderArticlePipeline() {
-
-    }
+	$(".left-search").on('click', function(e) {
+		$(".search-input").val("");
+	});
+	
+	$("#searchForm").on('submit', function(e) {
+		newSearch($(".search-input").val());
+		e.stopPropagation();
+		e.preventDefault();
+		return false;
+	});
 
     $(document).on('click', '.article-preview', function(e) {
         var that = $(this);

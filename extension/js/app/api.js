@@ -19,7 +19,8 @@ function Api() {
         'flags:getOne':{e:[]},
         'flags:get':{e:[]},
         'flags:add':{e:[]},
-        'files:add':{e:[]}
+        'files:add':{e:[]},
+        'notifications:getList':{e:[]}
     };
 
     _this.user_id = null;
@@ -148,6 +149,18 @@ function Api() {
                     _this.triggerEvent('error', {error:r.error}, target);
                 else
                     _this.triggerEvent('stages:get', {stages:r.list}, target);
+            });
+        }
+    };
+    _this.notifications = {
+        getList: function(params, target) {
+            params.origin_id =_this.user_id;
+            params.token = _this.user_token;
+            $.get(base + 'api/notifications/getList', params).done(function(r) {
+                if ('error' in r && r.error)
+                    _this.triggerEvent('error', {error:r.error}, target);
+                else
+                    _this.triggerEvent('stages:get', { list: r.list }, target);
             });
         }
     };

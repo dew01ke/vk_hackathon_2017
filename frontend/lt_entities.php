@@ -296,6 +296,7 @@ class News {
 		if ($data) {
 			$pipeline = self::getPipeline($id);
 			$flags = self::getFlags($id);
+			if ($pipeline) $data['pipeline'] = $pipeline;
 			if ($data['touched_by']) {
 				$touchUser = Users::get($data['touched_by']);
 				if ($touchUser) {
@@ -366,8 +367,10 @@ class News {
 		$id = (int) $id;
 		$list = DB::query("SELECT * FROM l_news_pipeline WHERE news_id=$id AND is_deleted=0 ORDER BY id DESC");
 		$pipelineFiles = [];
+		$pipelineUsers = [];
 		foreach($list as $item) {
 			$pipelineFiles[$item['id']] = [];
+			$pipelineUsers[$item['user_id']] = [];
 		}
 		if (count($pipelineIds)) {
 			$fileList = DB::query("SELECT l_news_files.pipeline_id, l_files.* FROM l_news_files LEFT JOIN l_files ON l_news_files.file_id=l_files.id WHERE pipeline_id IN (".implode(",",array_keys($pipelineIds)).") AND is_deleted=0");
@@ -378,8 +381,19 @@ class News {
 				if (!$item['thumbnails']) $item['thumbnails'] = [];
 				$pipelineFiles[$pipelineId][] = $item;
 			}
-			foreach($list as $item) {
+			foreach($list as $key=>$item) {
 				if ($pipelineFiles[$item['id']]) $item['files'] = $pipelineFiles[$item['id']];
+				$list[$key] = $item;
+			}
+		}
+		if (count($pipelineUsers)) {
+			$userList = DB::query("SELECT id, first_name, last_name, mid_name, origin_channel, origin_id, origin_handle, is_blacklisted FROM l_users WHERE id IN (".implode(",",array_keys($pipelineUsers)).") AND is_deleted=0");
+			foreach($userList as $item) {
+				$pipelineUsers[$item['id']] = $item;
+			}
+			foreach($list as $key=>$item) {
+				if ($pipelineUsers[$item['user_id']]) $item['user'] = $pipelineUsers[$item['user_id']];
+				$list[$key] = $item;
 			}
 		}
 		return $list;
@@ -638,7 +652,7 @@ class News {
 			foreach($fields as $field) {
 				if (isset($data[$field])) $prepared[$field] = $data[$field]; 
 			}
-			$
+			if (!$prepared['news_id']) $prepared['news_id'] = $id;
 			$prepared['time'] = time();
 			$prepared['date'] = date("Y-m-d");
 			$prepared['user_id'] = $userId;
@@ -1070,9 +1084,14 @@ class Notifications {
 		if ($data['news_id']) $where .= " AND news_id=".((int) $data['news_id']);
 		if ($data['fresh_only']) $where .= " AND is_fresh=1";
 		$data = DB::query("SELECT * FROM l_notifications WHERE user_to=$userId $where ORDER BY $order LIMIT $limit");
+		$ids = [];
 		foreach($data as $key=>$item) {
 			$item['data'] = json_decode($item['data'], true);
+			$ids[] = $item['id'];
 			$data[$key] = $item;
+		}
+		if ($data['mark'] and count($ids)) {
+			DB::query("UPDATE l_notifications SET is_fresh=0 WHERE user_to=$userId AND is_fresh=1 AND id IN (".implode(",",$ids).")");
 		}
 		return $data;
 	}
