@@ -82,7 +82,7 @@ if ($r->path === '' || $r->path === '/') {
 		       'title' => $data['title'],
 		       'source_url' => $data['url'],
 		       'synopsis' => $data['text'],
-		       'files' => $data['files'],
+		       'files' => $_FILES,
 		       'anonymous' => $data['anonymous'],
 		       ]);
   if ($id) {

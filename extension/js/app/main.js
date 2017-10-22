@@ -208,13 +208,14 @@
             template += '<div class="article-full-controls">';
             template += '<button data-article-id="' + article.id + '" type="button" class="article-full-save-button btn btn-success btn-sm">Сохранить</button>';
 
-
             template += '<div class="btn-group">';
             template += '<button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Переместить</button>';
             template += '<div class="dropdown-menu">';
             template += renderStagesToDropdown(stagesCache, article.id);
             template += '</div>';
             template += '</div>';
+
+            template += '<button data-article-id="' + article.id + '" type="button" class="article-comment-button btn btn-comment btn-sm">&nbsp;</button>';
 
             var buttonUpvoteClass = 'btn-outline-success',
                 buttonDownvoteClass = 'btn-outline-danger';
@@ -232,6 +233,41 @@
             template += '<button data-article-id="' + article.id + '" data-article-rate="upvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonUpvoteClass + '">+1</button>';
             template += '<button data-article-id="' + article.id + '" data-article-rate="downvote" type="button" class="article-full-rate-button btn btn-right btn-sm ' + buttonDownvoteClass + '">-1</button>';
             template += '</div>'; //controls
+			
+			if (article.pipeline) {
+				for (var key in article.pipeline) {
+					var action = article.pipeline[key];
+					var pipelineHTML = "";
+					var blockText = "";
+					pipelineHTML += '<div class="pipeline-item">';
+					pipelineHTML += '<div class="article-preview-time">';
+					var time = moment(action.time * 1000);
+					pipelineHTML += time.format('DD.MM') + ' в ' + time.format('HH:mm');
+					if (action.user) {
+						pipelineHTML += '<span class="article-preview-sender role' + action.user.role_id + '">' + action.user.first_name + ' ' + action.user.last_name + '</span>';
+					}
+					pipelineHTML += '</div>';
+					if (action.type == 0) {
+						blockText = '<b>Заявка на публикацию новости.</b>';
+					} else if (action.type == 1) {
+						blockText = 'Перенос новости в другую папку.</b>';
+					} else {
+						if (action.comment && action.comment != "") {
+							blockText += '<div class="pipeline-comment">' + action.comment + '</div>';
+						}
+						if (action.files) {
+							blockText += '<div class="pipeline-files-header">Прикрепленные файлы:</div>';
+							for (var fileKey in action.files) {
+								var file = action.files[fileKey];
+								blockText += '<div class="pipeline-file">' + $('<div/>').text((file.name && file.name != '') ? file.name : file.origin_name).html() + '</div>';
+							}
+						}
+					}
+					pipelineHTML += blockText;
+					pipelineHTML += '</div>';
+				}
+				template += pipelineHTML;
+			}
 
         } else {
             template += '<p>Что-то пошло не так :(</p>';
