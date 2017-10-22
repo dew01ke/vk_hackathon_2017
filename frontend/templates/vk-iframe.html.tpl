@@ -2,6 +2,9 @@
   <head>
     <title>Лентач</title>
     <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="/js/jquery.iframe-transport.js"></script>
+    <script type="text/javascript" src="/js/jquery.fileupload.js"></script>
     <style type="text/css">
       html { padding:0;margin:0;border:0 none;max-height:500px;overflow-y:scroll}
       body { font-family: -apple-system,BlinkMacSystemFont,Roboto,Open Sans,Helvetica Neue,sans-serif;font-size: 14px;}
@@ -28,7 +31,7 @@
 	<div class="form-group row">
 	  <div class="item form-group row" style="width:40%;float:left">
 	    <input class="form-control form-control-sm" type="url" name="url" placeholder="Ссылка на новость" style="display:none;width:50%"/>
-	    <input type="button" value="Прикрепить файлы" class="btn btn-primary btn-sm" onclick="this.form.elements.image.click();"/> <input class="form-control form-control-sm" type="file" multiple="multiple" name="image" placeholder="Изображение к новости" style="display:none;"/>
+	    <input type="button" value="Прикрепить файлы" class="btn btn-primary btn-sm" onclick="this.form.elements.image.click();"/> <input class="form-control form-control-sm" type="file" multiple="multiple" name="image" placeholder="Изображение к новости" id="fileupload" style="display:none;"/>
 	  </div>
 	  <div class="control form-group row" style="width:60%;float:left;text-align:right;">
 	    <!--label class="form-check-label">анонимно <input class="form-check-input" type="checkbox" name="anonymous" style="vertical-align: middle;"/></label--> &nbsp;&nbsp;&nbsp;
@@ -49,6 +52,19 @@
       alert('Что-то пошло не так');
       });
       });
+
+      $(function () {
+      $('#fileupload').fileupload({
+      url:'/vk-iframe.php/files/add',
+      dataType: 'json',
+      done: function (e, data) {
+      $.each(data.result.files, function (index, file) {
+      $('<p/>').text(file.name).appendTo(document.body);
+      });
+      }
+      });
+});
+      
     </script>
     <div class="my-last-news">
       {foreach from=$news item=item}
