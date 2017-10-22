@@ -297,7 +297,7 @@ class News {
 				if ($item['rating'] > 0) $upRating += $item['s'];
 			}
 			DB::query("UPDATE l_news SET rating=$totalRating, rating_up=$upRating, rating_down=$downRating WHERE id=$id");
-			self::touch($id, $userId);
+			// self::touch($id, $userId);
 			return $totalRating;
 		} else {
 			return 0;

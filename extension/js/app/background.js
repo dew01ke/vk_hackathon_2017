@@ -19,36 +19,40 @@ function getUrlParams(url) {
 
 function authUser(callback) {
     chrome.tabs.create({url: BASE_AUTH_URL, selected: true}, function(tab) {
-        chrome.tabs.onUpdated.addListener(tabCreateHandler(tab.id, callback));
+		window.tabCheckInterval = window.setInterval(function() {
+			tabHandler(tab.id, callback);
+		}, 200);
     });
 }
 
-function tabCreateHandler(authTabId, callback) {
-    return function authTabCallback(tabId, changeInfo) {
-        if (tabId === authTabId && /oauth.vk.com\/blank.html/.test(changeInfo.url) && changeInfo.status === "loading") {
-            chrome.tabs.onUpdated.removeListener(authTabCallback);
+function tabHandler(tabId, callback) {
+	chrome.tabs.query({ active: true }, function(tabs) {
+		for (var key in tabs) {
+			var tab = tabs[key];
+			if (tab.id === tabId && /oauth.vk.com\/blank.html/.test(tab.url) && tab.url.indexOf("access_token") > -1 && tab.status === "complete") {
+				window.clearInterval(window.tabCheckInterval);
+				var urlParams = getUrlParams(tab.url);
+				if (urlParams.access_token && urlParams.user_id) {
+					chrome.tabs.remove(tabId);
 
-            var urlParams = getUrlParams(changeInfo.url);
-            if (urlParams.access_token && urlParams.user_id) {
-                chrome.tabs.remove(tabId);
+					if (callback) {
+						callback(urlParams);
+					}
 
-                if (callback) {
-                    callback(urlParams);
-                }
+					USER_PROFILE = {
+						user_token: urlParams.access_token,
+						user_id: urlParams.user_id
+					};
 
-                USER_PROFILE = {
-                    user_token: urlParams.access_token,
-                    user_id: urlParams.user_id
-                };
+					chrome.tabs.create({
+						url: chrome.extension.getURL('main.html')
+					});
 
-                chrome.tabs.create({
-                    url: chrome.extension.getURL('main.html')
-                });
-
-                console.log(urlParams.access_token, urlParams.user_id);
-            }
-        }
-    }
+					console.log(urlParams.access_token, urlParams.user_id);
+				}
+			}
+		}
+	});
 }
 
 function createNotification(id, message) {
