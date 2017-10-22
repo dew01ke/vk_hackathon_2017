@@ -151,14 +151,17 @@
 
                 template += '<div class="article-active-corner"></div><div class="article-preview-time">';
                 template += time.format('DD.MM') + ' в ' + time.format('HH:mm');
-                if (article.source_url || true) template += '<span class="article-preview-sender"><a href="' + encodeURIComponent(article.source_url) + '" target="_blank">URL</a></span>';
+                if (article.source_url) template += '<span class="article-preview-sender"><a href="' + encodeURIComponent(article.source_url) + '" target="_blank">URL</a></span>';
                 template += '<span class="article-preview-sender">' + renderUserProfile(article, true, 'источник: ') + '</span>';
                 template += '</div>';
 
                 template += '<div class="article-preview-title">' + article.title + '</div>';
                 template += '<div class="article-preview-text">' + article.synopsis + '</div>';
 
+				template += '<div class="article-preview-controls">';
                 template += '<button data-article-id="' + article.id + '" type="button" class="article-preview-remove-button btn btn-right btn-outline-secondary btn-sm"><span class="oi oi-trash"></span></button>';
+                template += '<div class="article-preview-rating">' + (article.rating_up ? "<span class='article-preview-rating-down'>" + article.rating_down + "</span>" : "") + (article.rating_up ? "<span class='article-preview-rating-up'>" + article.rating_up + "</span>" : "") + '</div>';
+				template += '</div>';
 
                 template += '</li>';
             }
@@ -177,8 +180,8 @@
             var time = moment(article.create_time * 1000);
             var touched = (article.touch_time && article.touch_time !== '0') ? moment(article.touch_time * 1000) : null;
 
-            template += '<h4 class="article-full-title" contentEditable>' + ((article.title === '') ? '(Название)' : article.title) + '</h4>';
-            template += '<div class="article-full-text" contentEditable>' + ((article.synopsis === '') ? '(Текст)' : article.synopsis) + '</div>';
+            template += '<div class="article-editable-outer"><h4 class="article-full-title" contentEditable>' + ((article.title === '') ? '(Название)' : article.title) + '</h4><div class="edit-small"></div></div>';
+            template += '<div class="article-editable-outer"><div class="article-full-text" contentEditable>' + ((article.synopsis === '') ? '(Текст)' : article.synopsis) + '</div><div class="edit-small"></div></div>';
 
             template += '<div class="article-full-time">' + renderUserProfile(article, true, 'Отправил: ') + ' ' + time.format('DD.MM') + ' в ' + time.format('HH:mm') + '</div>';
 
@@ -244,9 +247,9 @@
                     html += '<li class="nav-item ' + ((stage.priority < 0) ? "nav-trash" : "") + '">';
                     if (isStageFirst && stagesCount === 0) {
                         isStageFirst = false;
-                        html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '">' + stage.name + '</a>';
+                        html += '<a class="nav-link active" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     } else {
-                        html += '<a class="nav-link" href="#index/stage' + stage.id + stage.name + '">' + stage.name + '</a>';
+                        html += '<a class="nav-link" href="#index/stage' + stage.id + stage.name + '"><span class="stage-counter" data-stage="' + stage.id + '">0</span>' + stage.name + '</a>';
                     }
                     html += '</li>';
 
@@ -277,9 +280,18 @@
                         if (!isViewFirst && stagesCount === 0) {
                             router.activeRoute.active_section = section;
                         }
+						
+						if (news.count_by_stage) {
+							for (var key in news.count_by_stage) {
+								$(".stage-counter[data-stage=" + key + "]").text(news.count_by_stage[key]);
+							}
+						}
 
                         newsCache.list_by_stages[stage.id] = news.news;
                         newsCache.user_profile = news.user_profile;
+						var profileHTML = "<img src='/assets/profile.png' width='32'>&nbsp;&nbsp;&nbsp; <b>" + news.user_profile.first_name + " " + news.user_profile.last_name + "</b>";
+						$(".header-profile").html(profileHTML);
+						
                         stagesCount++;
                     }, 'getStageContent' + stage.id);
 
@@ -367,6 +379,15 @@
                     } else {
                         console.log('container for workflow not found', router.activeRoute);
                     }
+					
+					container.find("[contenteditable]").each(function() {
+						$(this).on("focus", function() {
+							$(this).closest(".article-editable-outer").find(".edit-small").hide();
+						});
+						$(this).on("blur", function() {
+							$(this).closest(".article-editable-outer").find(".edit-small").show();
+						});
+					});
                 }
             }, 'articleGetOne');
 
