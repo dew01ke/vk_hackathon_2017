@@ -183,7 +183,7 @@
             }
             template += '</ul>';
         } else {
-            template = '<div class="content-empty"><p>Здесь ничего нет</p></div>';
+            template = '<div class="content-empty"><p>Заявок в этой папке в настоящий момент нет.</p></div>';
         }
 
         return template;
