@@ -241,6 +241,20 @@ class News {
 						}
 					}
 				}
+				if ($pipelineId and $data['images']) {
+					foreach($data['images'] as $key=>$file) {
+					  $path = $file['url'];
+					  //if (file_exists($path)) {
+					    $fileName = array_pop(explode("/", $path));
+					    if (!$file['title']) $file['title'] = $fileName;
+					    $fileData = [ "type" => 0, "name" => $file['title'], "origin_name" => $fileName, "mime" => $file['mime'], "size" => filesize($file['path']) ];
+					    $fileId = Files::create($fileData);
+					    if ($fileId) {
+					      self::addFile($pipelineId, $fileId, $userId);
+					    }
+					    //}
+					}
+				}
 			}
 			return $iid;
 		} else {

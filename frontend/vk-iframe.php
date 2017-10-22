@@ -4,6 +4,25 @@ require_once 'lt_core.php';
 require_once 'lt_entities.php';
 require_once 'UploadHandler.php';
 
+class Request
+{
+  public $path;
+  
+  function __construct()
+  {
+    $fullPath = parse_url(filter_input(INPUT_SERVER, 'REQUEST_URI'), PHP_URL_PATH);
+    $this->path = strpos($fullPath, '/vk-iframe.php') === 0
+      ? substr($fullPath, strlen('/vk-iframe.php')) : $fullPath;
+  }
+}
+$r = new \Request();
+
+if ($r->path === '/files/add' || $r->path === '/files/add/') {
+  //header('Content-Type: application/json');
+  new \UploadHandler();
+  exit;
+} 
+
 //ini_set('display_errors', 1);
 //error_reporting(-1);
 $secret = 'xG2kNupglLf88BF3toKq';
@@ -37,19 +56,6 @@ $user = \Users::getByOrigin('vk', $vkUserId);
 $root = '.';
 initSmarty();
 
-class Request
-{
-  public $path;
-  
-  function __construct()
-  {
-    $fullPath = parse_url(filter_input(INPUT_SERVER, 'REQUEST_URI'), PHP_URL_PATH);
-    $this->path = strpos($fullPath, '/vk-iframe.php') === 0
-      ? substr($fullPath, strlen('/vk-iframe.php')) : $fullPath;
-  }
-}
-
-$r = new \Request();
 $matches = [];
 if ($r->path === '' || $r->path === '/') {
   $news = \News::getList(['limit' => 3, 'origin_user' => $user['id'], 'order' => ['create_time' => 'DESC']]);
@@ -73,7 +79,7 @@ if ($r->path === '' || $r->path === '/') {
 					  'images' => ['filter' => FILTER_DEFAULT,
 						       'flags' => FILTER_REQUIRE_ARRAY],
 					  ]);
-  if (!count(array_filter($data))) {
+  if (!$data['text'] && ($data['url'] === false || $data['url'] === null) && !$data['title']) {
     echo json_encode(['errors' => ['Все поля пустые :( Заполните хотя бы одно.']]);
     exit;
   }
@@ -84,7 +90,7 @@ if ($r->path === '' || $r->path === '/') {
 		       'title' => $data['title'],
 		       'source_url' => $data['url'],
 		       'synopsis' => $data['text'],
-		       'files' => $_FILES,
+		       'images' => $data['images'],
 		       'anonymous' => $data['anonymous'],
 		       ]);
   if ($id) {
@@ -104,10 +110,6 @@ if ($r->path === '' || $r->path === '/') {
     echo json_encode(['messages' => ['Новость удалена']]);
   }
   exit;  
-} elseif ($r->path === '/files/add') {
-  //header('Content-Type: application/json');
-  new \UploadHandler();
-  exit;
 } else {
   http_response_code(404);
   header('Content-Type: application/json');
