@@ -696,6 +696,32 @@
 
                 if (response.success) {
                     parent.find('.article-comment-form').slideToggle();
+
+                    api.on('news:getOne', function(e, response) {
+                        api.off('news:getOne', 'articleGetOne');
+
+                        if (response.item && response.user_profile) {
+                            var html = getArticleFullTemplate(response.item, response.user_profile);
+                            var container = (router.activeRoute && router.activeRoute.active_section) ? router.activeRoute.active_section.find('.workflow') : null;
+
+                            if (container) {
+                                container.html(html);
+                            } else {
+                                console.log('container for workflow not found', router.activeRoute);
+                            }
+
+                            container.find("[contenteditable]").each(function() {
+                                $(this).on("focus", function() {
+                                    $(this).closest(".article-editable-outer").find(".edit-small").hide();
+                                });
+                                $(this).on("blur", function() {
+                                    $(this).closest(".article-editable-outer").find(".edit-small").show();
+                                });
+                            });
+                        }
+                    }, 'articleGetOne');
+
+                    api.news.getOne({ id: articleID }, 'articleGetOne');
                 }
             }, 'articleComment');
 
